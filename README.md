@@ -4,7 +4,7 @@ Data visualization application/GUI in development in python for the Marine Opera
 
 
 ## Setup
-To setup your environment to run this program, you must first install the following python packages: matplotlib, and cartopy. If you already have any of these installed you can just skip that step. Be patient, as installing some of these packages can take some time. Everytime conda asks you to Proceed([y]/n)?, type in yes (read the prompt it gives you and only follow this within reason). An internet connection is required for the setup.
+To setup your environment to run this program, you must first install the following python packages: matplotlib, and cartopy. If you already have any of these installed you can just skip that step. Be patient, as installing some of these packages can take some time. Everytime conda asks you to Proceed([y]/n)?, type in y (read the prompt it gives you and only follow this within reason). An internet connection is required for the setup.
 1. Make sure you have python installed first
 2. Install conda (specifically minoconda, although anaconda also works, it just takes longer to install and has unneeded packages) from https://conda.io/miniconda.html. 
 3. Open anaconda
@@ -28,4 +28,8 @@ conda install -c conda-forge cartopy
 ```
 
 
-Addmittedly, there are a lot of steps involved with setting up your environment to run this program, but it allows for the most rapid development of this software.
+Admittedly, there are a lot of steps involved with setting up your environment to run this program, but it allows for the most rapid development of this software.
+
+
+### Acknowledgements:
+This program was built based on matplotlib: https://matplotlib.org/users/installing.html#install-requirements, and cartopy: https://scitools.org.uk/cartopy/docs/latest/index.html
