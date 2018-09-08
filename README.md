@@ -14,9 +14,23 @@ In anaconda:
 where conda
 where python
 ```
-4. Install cartopy
+5. Set up your anaconda environment. If you aren't running python 3.6, use whatever version you have (although you may want to update it).
+```
+conda create -n name_of_environment python=3.5
+```
+It will ask you to active the environment, in which case you must input:
+```
+conda activate name_of_environment
+```
+(to deactive an active environment, type in: conda deactivate).
+
+6. Install cartopy
 ```
 conda install -c conda-forge cartopy
+```
+7. Install an updated version of numpy
+```
+conda install numpy
 ```
 
 
@@ -25,3 +39,4 @@ Admittedly, there are a lot of steps involved with setting up your environment t
 
 ### Acknowledgements:
 This program was built based on matplotlib: https://matplotlib.org/users/installing.html#install-requirements, and cartopy: https://scitools.org.uk/cartopy/docs/latest/index.html
+7. You can now close anaconda.

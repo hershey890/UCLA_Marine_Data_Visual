@@ -1,3 +1,7 @@
 /.idea
 /venv
 /_pycache_
+/Map_Visualization/.idea
+/Map_Visualization/venv
+/Map_Visualization/test.py
+/Map_Visualization/SampleData.txt
