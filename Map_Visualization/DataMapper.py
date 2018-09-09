@@ -41,6 +41,8 @@ class DataMapper:
         # TODO: see if there's anything I can do to zoom into the area of interest
 
     def plot_GPS(self):
+        # TODO: my current algorithm is very slow and runs on O(num_lines*char_per_line*char_per_word*plot_time)
+        # by reducing the number of for loops and just starting at the right index in the line I can decrease the time
         ''' Plots only location data with no other attributes '''
 
         with open(self.file, 'r') as data:
@@ -83,9 +85,11 @@ class DataMapper:
                 long = float(long)
 
                 # Plot data - plot(x, y)
+                # TODO: Calling this function takes a lot of time
                 self.ax.plot(long, lat, 'bo', markersize=7, transform=ccrs.Geodetic())
+                # print(long, lat)
 
-        plt.show()
+        # plt.show()
 
     def plot_ship_heading(self):
         ''' Plots GPS data and ship heading in degrees as a vector on top of other data '''
