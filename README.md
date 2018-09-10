@@ -33,6 +33,14 @@ conda install -c conda-forge cartopy
 conda install numpy
 ```
 
+## Running the Program
+1. Keep a data file titled SampleData.txt, DataMapper.py, and test2.py in the same file
+2. Run test2.py with the command:
+```
+py test2.py
+```
+This is a work in progress, it only really works for my one specific data for now.
+
 
 Admittedly, there are a lot of steps involved with setting up your environment to run this program, but it allows for the most rapid development of this software.
 
