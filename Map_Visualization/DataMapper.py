@@ -25,6 +25,8 @@
 
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
+import cartopy.feature as cfeature
+from matplotlib.offsetbox import AnchoredText
 
 class DataMapper:
     ''' Plots all the data points for a particular attribute (ex. (lat, long, temp), (lat, long, conductivity) '''
@@ -39,9 +41,8 @@ class DataMapper:
 
         # Changes the display size, I'm not too sure how to adjust zoom though
         # TODO: get the margins correct
-        plt.figure(figsize=(10, 12)) # the position of this in the code seems to matter more than it should, idk why
-        self.ax = plt.axes(projection=ccrs.Mollweide())
-        self.ax.coastlines()
+        plt.figure(figsize=(10, 6)) # the position of this in the code seems to matter more than it should, idk why
+        self.ax = plt.axes(projection=ccrs.PlateCarree())
 
     def plot_GPS(self):
         ''' Plots only location data with no other attributes '''
@@ -80,14 +81,31 @@ class DataMapper:
                 fLong_list.append(float(fLongitude[:-1]))  # x-coord
                 fLat_list.append(float(fLatitude[:-1]))  # y-coord
 
+        #########################################################################################
+        # MAP FORMATTING
+        self.ax.stock_img()
+        # TODO: have a better background stock image
+        states_provinces = cfeature.NaturalEarthFeature(
+            category='cultural',
+            name='admin_1_states_provinces_lines',
+            scale='50m',
+            facecolor='none')
+        self.ax.add_feature(states_provinces, edgecolor='gray')
+
         # Changes the resolution
-        self.ax.coastlines(resolution='50m', color='black', linewidth=1)
+        self.ax.coastlines(resolution='10m', color='black', linewidth=1)
+            # These also work but the resolution seems to be lower
+            # self.ax.add_feature(cfeature.LAND)
+            # self.ax.add_feature(cfeature.COASTLINE)
+        # Plots country borders
+        self.ax.add_feature(cfeature.BORDERS)
         # Plots all the points
-        self.ax.plot(fLong_list, fLat_list, 'bo', markersize=5, transform=ccrs.Geodetic())
+        self.ax.plot(fLong_list, fLat_list, 'bo', markersize=2, transform=ccrs.PlateCarree())
         # Sets the margins for the plot
         # TODO: make the margins flexible and based on the data points
         # TODO, make a GUI that allows for more flexible movement of the plot (this may require folium)
-        self.ax.set_extent([-125, -116, 31, 38], crs=ccrs.PlateCarree())
+        # TODO: projections seem to be off
+        self.ax.set_extent([-124, -113, 31, 38], crs=ccrs.PlateCarree())
         plt.show() # I can prob remove this and have a display function at the end/
 
     def plot_ship_heading(self):
