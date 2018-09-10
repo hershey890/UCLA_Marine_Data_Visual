@@ -3,6 +3,10 @@
 # https://stackoverflow.com/questions/25428512/draw-a-map-of-a-specific-country-with-cartopy
 # https://github.com/SciTools/cartopy/issues/1048
 
+# TODO: have a background img/map
+# TODO: increased resolution
+# TODO: use folium to have dynamic maps
+
 ###########################################################################
 #   DATA FORMAT - .txt file
 #   Column 1: year, month day hour minute decimal second.
@@ -33,12 +37,11 @@ class DataMapper:
         self.is_heading_plotted = False
         self.is_course_plotted = False
 
+        # Changes the display size, I'm not too sure how to adjust zoom though
+        # TODO: get the margins correct
+        plt.figure(figsize=(10, 12)) # the position of this in the code seems to matter more than it should, idk why
         self.ax = plt.axes(projection=ccrs.Mollweide())
         self.ax.coastlines()
-        # plt.show()
-        # TODO: implement a method of zooming into a particular region
-
-        # TODO: see if there's anything I can do to zoom into the area of interest
 
     def plot_GPS(self):
         ''' Plots only location data with no other attributes '''
@@ -49,13 +52,13 @@ class DataMapper:
         with open(self.file, 'r') as data:
             # Iterates through lines in the file
             for line in data:
-
                 num_space = 0
                 fLongitude = ''
                 fLatitude = ''
                 error_flag = False
 
                 # Reads through a single line to save the latitude and longitude
+                # TODO: I can prob just use the index/column instead of a for loop this big
                 for char in line:
                     # ERROR: if the line contains NaN just skip it
                     if char == 'N':
@@ -77,8 +80,15 @@ class DataMapper:
                 fLong_list.append(float(fLongitude[:-1]))  # x-coord
                 fLat_list.append(float(fLatitude[:-1]))  # y-coord
 
+        # Changes the resolution
+        self.ax.coastlines(resolution='50m', color='black', linewidth=1)
+        # Plots all the points
         self.ax.plot(fLong_list, fLat_list, 'bo', markersize=5, transform=ccrs.Geodetic())
-        plt.show()
+        # Sets the margins for the plot
+        # TODO: make the margins flexible and based on the data points
+        # TODO, make a GUI that allows for more flexible movement of the plot (this may require folium)
+        self.ax.set_extent([-125, -116, 31, 38], crs=ccrs.PlateCarree())
+        plt.show() # I can prob remove this and have a display function at the end/
 
     def plot_ship_heading(self):
         ''' Plots GPS data and ship heading in degrees as a vector on top of other data '''
