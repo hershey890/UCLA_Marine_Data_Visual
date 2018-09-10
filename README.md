@@ -35,6 +35,17 @@ conda install numpy
 8. You can now close anaconda.
 
 
+
+## Running the program
+1. Put test2.py, DataMapper.py, and SampleData.txt in the same file
+2. Open up command prompt, powershell, or terminal and navigate to the folder all the above programs are located in (should work using the cd command)
+3. Run the code with:
+```
+py test2.py
+```
+
+
+----
 Admittedly, there are a lot of steps involved with setting up your environment to run this program, but it allows for the most rapid development of this software.
 
 
