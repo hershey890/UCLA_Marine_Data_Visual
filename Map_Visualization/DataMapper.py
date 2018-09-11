@@ -7,7 +7,7 @@
 # TODO: use folium to have dynamic maps
 # TODO: make a GUI that allows for more flexible movement of the plot (this may require folium)
 # TODO: labels on the map
-# TODO: hq map of LA/CA region
+# TODO: get a high quality map of LA/CA region
 
 ###########################################################################
 #   DATA FORMAT - .txt file
@@ -48,7 +48,7 @@ class DataTypes:
 
 
 # TODO: make this function more general purpose, it only works for GPS data rn, also maybe have an enum-based parameter
-def data_parser(file:str, fLongitude_list:list, fLatitude_list:list):
+def data_parser(file:str, fLongitude_list:list, fLatitude_list:list): # , data_type:int=0):
     ''' Reads the data from the .txt file and stores it in a list for longitude and one for latitude
 
     :param file: string containing the name of the file with the sensor data (must contain the file extension .txt)
@@ -73,22 +73,21 @@ def data_parser(file:str, fLongitude_list:list, fLatitude_list:list):
                 if char == 'N':
                     error_flag = True
                     break
+
                 if char == ' ':
                     num_space += 1
-                if num_space == 3:
+                elif num_space == 3 and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
                     fLongitude += char
-                elif num_space == 4:
+                elif num_space == 4 and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
                     fLatitude += char
-                elif num_space == 5:
-                    break
 
             if error_flag:
                 continue
 
+            # print('#{0}#'.format(fLongitude), '#{0}#'.format(fLatitude))
             # Remove the trailing comma, convert long and lat to floats, and append to the list
-            fLongitude_list.append(float(fLongitude[:-1]))  # x-coord
-            fLatitude_list.append(float(fLatitude[:-1]))  # y-coord
-
+            fLongitude_list.append(float(fLongitude))  # x-coord
+            fLatitude_list.append(float(fLatitude))  # y-coord
 
 
 class DataMapper:
@@ -152,8 +151,8 @@ class DataMapper:
     def plot_GPS(self):
         ''' Plots only location data with no other attributes '''
 
-        # READING/SAVING DATA FROM FILE
         #################################################################
+        # READING/SAVING DATA FROM FILE
         fLong_list = []  # x coord
         fLat_list = []  # y coord
 
@@ -204,5 +203,4 @@ class DataMapper:
 
     def display_map(self):
         ''' Call after using all plotting functions to display the map '''
-
         plt.show()
