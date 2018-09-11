@@ -25,15 +25,14 @@
 #   Column 12: Fluorescence
 ###########################################################################
 
-# from enum import Enum
-
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import cartopy.feature as cfeature
 import cartopy.io.img_tiles as cimgt
 
-class DataTypes:
-    ''' Substitute for enumeration '''
+
+class DataAttributes:
+    """ Substitute for enumeration """
     DATE                = 1
     TIME                = 2
     GPS_LONGITUDE       = 3
@@ -46,58 +45,70 @@ class DataTypes:
     CONDUCTIVITY        = 10
     FLUORESCENCE        = 11
 
-
-# TODO: make this function more general purpose, it only works for GPS data rn, also maybe have an enum-based parameter
-def data_parser(file:str, fLongitude_list:list, fLatitude_list:list): # , data_type:int=0):
-    ''' Reads the data from the .txt file and stores it in a list for longitude and one for latitude
+# TODO: add a parameter to accept another data list (i.e. speed/heading vectors)
+def data_parser(file:str, fLongitude_list:list=[], fLatitude_list:list=[], fData_list:list=[], iData_Attribute:int=0,
+                fVector_Data_list:list=[], iVector_Data_Type:int=0):
+    """ Reads the data from the .txt file and stores it in a list for longitude and one for latitude
 
     :param file: string containing the name of the file with the sensor data (must contain the file extension .txt)
     :param fLongitude_list: pass an empty list that will be filled with all the longitudinal data points
     :param fLatitude_list: pass an empty list that will be filled with all the latitude data points
-    :return: void - does modify the two lists passed to the function
-    '''
+    :param fData_list: stores an optional data attribute to be displayed (i.e. temperature, salinity,
+           conductivity, fluorescence), ex. DataAttributes.SALINITY
+    :param iData_Attribute: pass a member variables (8-11) from DataAttributes to determine which one is plotted
+    :return: void - modifies the lists passed to the function
+    """
 
-    # TODO: set the two lists to empty when passed
+    # Clears the data in the lists (using fLongitude_list = [] redeclares the list which causes issues)
+    fLongitude_list[:]     = []
+    fLatitude_list[:]      = []
+    fData_list[:]          = []
+    fVector_Data_list[:]   = []
+
+    # Opens, closes and reads the file
     with open(file, 'r') as data:
         # Iterates through lines in the file
         for line in data:
-            num_space = 0
+            iNumber_spaces = 0
             fLongitude = ''
             fLatitude = ''
+            #fData = ''
             error_flag = False
 
             # Reads through a single line to save the latitude and longitude
-            # TODO: I can prob just use the index/column instead of a for loop this big
             for char in line:
                 # ERROR: if the line contains NaN just skip it
                 if char == 'N':
                     error_flag = True
                     break
-
                 if char == ' ':
-                    num_space += 1
-                elif num_space == 3 and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
+                    iNumber_spaces += 1
+                elif iNumber_spaces == 3 and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
                     fLongitude += char
-                elif num_space == 4 and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
+                elif iNumber_spaces == 4 and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
                     fLatitude += char
+                # If there is another data attribute specified, it will be saved in this form
+                # elif iData_Attribute != 0 and iNumber_spaces == iData_Attribute and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
+                #     fData += char
 
             if error_flag:
                 continue
 
-            # print('#{0}#'.format(fLongitude), '#{0}#'.format(fLatitude))
-            # Remove the trailing comma, convert long and lat to floats, and append to the list
-            fLongitude_list.append(float(fLongitude))  # x-coord
-            fLatitude_list.append(float(fLatitude))  # y-coord
+            # Adds the data points to the list
+            fLongitude_list.append(float(fLongitude)) # x-coord
+            fLatitude_list.append(float(fLatitude))   # y-coord
+            # If there are any other data attributes to be displayed, display them here
+            # if iData_Attribute != 0:
+            #     fData_list.append(float(fData))
 
 
 class DataMapper:
-    ''' Plots all the data points for a particular attribute (ex. (lat, long, temp), (lat, long, conductivity) '''
+    """ Plots all the data points for a particular attribute (ex. (lat, long, temp), (lat, long, conductivity) """
 
     # Remember that there are data points with NaN
 
     # TODO: add a method of inputting the file
     def __init__(self, file='SampleData.txt'):
-        ''' Only used for initializing member variables '''
         self.file = file
         self.is_heading_plotted = False
         self.is_course_plotted = False
@@ -149,10 +160,11 @@ class DataMapper:
 
 
     def plot_GPS(self):
-        ''' Plots only location data with no other attributes '''
+        """ Plots only location data with no other attributes """
 
-        #################################################################
-        # READING/SAVING DATA FROM FILE
+        # ***********************************************************************
+        # * READING/SAVING DATA FROM FILE
+        # ***********************************************************************
         fLong_list = []  # x coord
         fLat_list = []  # y coord
 
@@ -160,11 +172,12 @@ class DataMapper:
         data_parser(self.file, fLong_list, fLat_list)
 
         # Plots all the points
+        # TODO: The error is caused by this line of code
         self.ax.plot(fLong_list, fLat_list, 'bo', markersize=2, transform=ccrs.Geodetic())
 
 
     def plot_ship_heading(self):
-        ''' Plots GPS data and ship heading in degrees as a vector on top of other data '''
+        """ Plots GPS data and ship heading in degrees as a vector on top of other data """
         pass
 
     def remove_ship_heading(self):
@@ -177,30 +190,30 @@ class DataMapper:
         pass
 
     def remove_ship_course(self):
-        ''' Removes ship's course vectors '''
+        """ Removes ship's course vectors """
         # TODO: add check to see if the ships course is even plotted
         pass
 
     def plot_speed(self):
-        ''' Plots GPS data and speed '''
+        """ Plots GPS data and speed """
         pass
 
     def plot_temperature(self):
-        ''' Plots GPS data and temperature '''
+        """ Plots GPS data and temperature """
         pass
 
     def plot_salinity(self):
-        ''' Plots GPS data and salinity '''
+        """ Plots GPS data and salinity """
         pass
 
     def plot_conductivity(self):
-        ''' Plots GPS data and conductivity '''
+        """ Plots GPS data and conductivity """
         pass
 
     def plot_fluorescence(self):
-        ''' Plots GPS data and fluorescence '''
+        """ Plots GPS data and fluorescence """
         pass
 
     def display_map(self):
-        ''' Call after using all plotting functions to display the map '''
+        """ Call after using all plotting functions to display the map """
         plt.show()
