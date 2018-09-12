@@ -45,7 +45,6 @@ class DataAttributes:
     CONDUCTIVITY        = 10
     FLUORESCENCE        = 11
 
-# TODO: add a parameter to accept another data list (i.e. speed/heading vectors)
 def data_parser(file:str, fLongitude_list:list=[], fLatitude_list:list=[], fData_list:list=[], iData_Attribute:int=0,
                 fVector_Data_list:list=[], iVector_Data_Type:int=0):
     """ Reads the data from the .txt file and stores it in a list for longitude and one for latitude
@@ -72,7 +71,8 @@ def data_parser(file:str, fLongitude_list:list=[], fLatitude_list:list=[], fData
             iNumber_spaces = 0
             fLongitude = ''
             fLatitude = ''
-            #fData = ''
+            fData = ''
+            fVector_Data = ''
             error_flag = False
 
             # Reads through a single line to save the latitude and longitude
@@ -88,8 +88,11 @@ def data_parser(file:str, fLongitude_list:list=[], fLatitude_list:list=[], fData
                 elif iNumber_spaces == 4 and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
                     fLatitude += char
                 # If there is another data attribute specified, it will be saved in this form
-                # elif iData_Attribute != 0 and iNumber_spaces == iData_Attribute and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
-                #     fData += char
+                elif iData_Attribute != 0 and iNumber_spaces == iData_Attribute and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
+                    fData += char
+                # If there is another vector data attribute specified, it will be saved in this form
+                if iVector_Data_Type != 0 and iNumber_spaces == iVector_Data_Type and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
+                    fVector_Data += char
 
             if error_flag:
                 continue
@@ -98,8 +101,10 @@ def data_parser(file:str, fLongitude_list:list=[], fLatitude_list:list=[], fData
             fLongitude_list.append(float(fLongitude)) # x-coord
             fLatitude_list.append(float(fLatitude))   # y-coord
             # If there are any other data attributes to be displayed, display them here
-            # if iData_Attribute != 0:
-            #     fData_list.append(float(fData))
+            if iData_Attribute != 0:
+                fData_list.append(float(fData))
+            if iVector_Data_Type != 0:
+                fVector_Data_list.append(float(fVector_Data))
 
 
 class DataMapper:
@@ -112,6 +117,8 @@ class DataMapper:
         self.file = file
         self.is_heading_plotted = False
         self.is_course_plotted = False
+        self.fLong_list = []  # x coord
+        self.fLat_list = []  # y coord
 
         # ***********************************************************************
         # * MAP TILING
@@ -165,15 +172,12 @@ class DataMapper:
         # ***********************************************************************
         # * READING/SAVING DATA FROM FILE
         # ***********************************************************************
-        fLong_list = []  # x coord
-        fLat_list = []  # y coord
 
         # Creates lists of longitude and latitude to be passed to self.ax.plot() to be plotted
-        data_parser(self.file, fLong_list, fLat_list)
+        data_parser(self.file, self.fLong_list, self.fLat_list)
 
         # Plots all the points
-        # TODO: The error is caused by this line of code
-        self.ax.plot(fLong_list, fLat_list, 'bo', markersize=2, transform=ccrs.Geodetic())
+        self.ax.plot(self.fLong_list, self.fLat_list, 'bo', markersize=2, transform=ccrs.Geodetic())
 
 
     def plot_ship_heading(self):
