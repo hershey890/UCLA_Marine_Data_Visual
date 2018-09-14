@@ -30,6 +30,7 @@ import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import cartopy.feature as cfeature
 import cartopy.io.img_tiles as cimgt
+from cartopy.io.img_tiles import OSM
 
 
 class DataAttributes:
@@ -89,10 +90,12 @@ def data_parser(file:str, fLongitude_list:list=[], fLatitude_list:list=[], fData
                 elif iNumber_spaces == 4 and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
                     fLatitude += char
                 # If there is another data attribute specified, it will be saved in this form
-                elif iData_Attribute != 0 and iNumber_spaces == iData_Attribute and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
+                elif iData_Attribute != 0 and iNumber_spaces == iData_Attribute and \
+                        (char.isnumeric() or char == '.' or char == '+' or char == '-'):
                     fData += char
                 # If there is another vector data attribute specified, it will be saved in this form
-                if iVector_Data_Type != 0 and iNumber_spaces == iVector_Data_Type and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
+                if iVector_Data_Type != 0 and iNumber_spaces == iVector_Data_Type and \
+                        (char.isnumeric() or char == '.' or char == '+' or char == '-'):
                     fVector_Data += char
 
             if error_flag:
@@ -108,20 +111,6 @@ def data_parser(file:str, fLongitude_list:list=[], fLatitude_list:list=[], fData
             if iVector_Data_Type != 0:
                 fVector_Data_list.append(float(fVector_Data))
 
-
-def data_color_mapping(data_point:float):
-    """
-
-    :param data_point:
-    :return:
-    """
-    pass
-
-# def color_bar():
-#     im = ax.imshow(np.arange(100).reshape((10,10)))
-#     divider = make_axes_locatable(ax)
-#     cax = divider.append_axes("right", size="5%", pad=0.05)
-#     plt.colorbar(im, cax=cax)
 
 class DataMapper:
     """ Plots all the data points for a particular attribute (ex. (lat, long, temp), (lat, long, conductivity) """
@@ -157,41 +146,54 @@ class DataMapper:
         # TODO: explore the different kinds of map tiling
 
         # Create a Stamen Terrain instance
-        stamen_terrain = cimgt.StamenTerrain()
+        # stamen_terrain = cimgt.StamenTerrain()
+        # stamen_terrain = cimgt.OSM()
+        osm_tiles = OSM()
 
         # Changes the display size - specifically figsize=(x,y)
-        fig = plt.figure(figsize=(10, 6))
+        fig = plt.figure(figsize=(12, 6))
 
         # Create a GeoAxes in the tile's projection
-        self.ax = fig.add_subplot(1, 1, 1, projection=stamen_terrain.crs)
+        # self.ax = fig.add_subplot(1, 1, 1, projection=stamen_terrain.crs)
+        self.ax = plt.axes(projection=osm_tiles.crs)
+
+        fig.tight_layout()
+
+        # Sets margins around data
+        # self.ax.set_xmargin(0.05)
+        # self.ax.set_ymargin(0.05)
 
         # Limit the extent of the map to a specific region based on latitude/longitude
         # TODO: make the margins flexible and based on the data points
-        self.ax.set_extent([-124, -113, 31, 38], crs=ccrs.Geodetic())
+        # self.ax.set_extent([-124, -113, 31, 38], crs=ccrs.Geodetic())
+        self.ax.set_extent([-118.54, -118.35, 33.715, 34.02], crs=ccrs.PlateCarree())
+        # self.ax.set_extent([-118.45, -118.37, 33.73, 33.89])
+
 
         # Add the Stamen data at zoom level 9
-        self.ax.add_image(stamen_terrain, 8)
+        self.ax.add_image(osm_tiles, 12, interpolation='spline36')
+        # self.ax.coastlines('10m')
         # self.ax = plt.axes(projection=ccrs.PlateCarree())
 
         # ***********************************************************************
         # * MAP FORMATTING
         # ***********************************************************************
         # Province borders
-        states_provinces = cfeature.NaturalEarthFeature(
-            category='cultural',
-            name='admin_1_states_provinces_lines',
-            scale='50m',
-            facecolor='none')
-        self.ax.add_feature(states_provinces, edgecolor='gray')
+        # states_provinces = cfeature.NaturalEarthFeature(
+        #     category='cultural',
+        #     name='admin_1_states_provinces_lines',
+        #     scale='50m',
+        #     facecolor='none')
+        # self.ax.add_feature(states_provinces, edgecolor='gray')
 
         # Adding coastlines
-        self.ax.coastlines(resolution='10m', color='black', linewidth=1)
+        # self.ax.coastlines(resolution='10m', color='black', linewidth=1)
             # These also work but the resolution seems to be lower
             # self.ax.add_feature(cfeature.LAND)
             # self.ax.add_feature(cfeature.COASTLINE)
 
         # Plots country borders
-        self.ax.add_feature(cfeature.BORDERS)
+        # self.ax.add_feature(cfeature.BORDERS)
 
 
     def plot_GPS(self):
