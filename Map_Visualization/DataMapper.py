@@ -6,10 +6,9 @@
 
 # TODO: use folium to have dynamic maps
 # TODO: make a GUI that allows for more flexible movement of the plot (this may require folium)
-# TODO: geographic references
 # TODO: get a high quality map of LA/CA region
 # TODO: add a label to the colorbar
-# TODO: 
+# TODO: bugs in temperature, conductivity, and fluorescence
 
 ###########################################################################
 #   DATA FORMAT - .txt file
@@ -71,7 +70,7 @@ def data_parser(file:str, fLongitude_list:list=[], fLatitude_list:list=[], fData
     with open(file, 'r') as data:
         # Iterates through lines in the file
         for line in data:
-            iNumber_spaces = 0
+            iNumber_commas = 0
             fLongitude = ''
             fLatitude = ''
             fData = ''
@@ -84,18 +83,18 @@ def data_parser(file:str, fLongitude_list:list=[], fLatitude_list:list=[], fData
                 if char == 'N':
                     error_flag = True
                     break
-                if char == ' ':
-                    iNumber_spaces += 1
-                elif iNumber_spaces == 3 and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
+                if char == ',':
+                    iNumber_commas += 1
+                elif iNumber_commas == 3 and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
                     fLongitude += char
-                elif iNumber_spaces == 4 and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
+                elif iNumber_commas == 4 and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
                     fLatitude += char
                 # If there is another data attribute specified, it will be saved in this form
-                elif iData_Attribute != 0 and iNumber_spaces == iData_Attribute and \
+                elif iData_Attribute != 0 and iNumber_commas == iData_Attribute and \
                         (char.isnumeric() or char == '.' or char == '+' or char == '-'):
                     fData += char
                 # If there is another vector data attribute specified, it will be saved in this form
-                if iVector_Data_Type != 0 and iNumber_spaces == iVector_Data_Type and \
+                if iVector_Data_Type != 0 and iNumber_commas == iVector_Data_Type and \
                         (char.isnumeric() or char == '.' or char == '+' or char == '-'):
                     fVector_Data += char
 
