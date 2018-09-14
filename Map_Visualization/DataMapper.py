@@ -30,6 +30,10 @@ import matplotlib.pyplot as plt
 import cartopy.feature as cfeature
 import cartopy.io.img_tiles as cimgt
 
+# Colorbar
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+import numpy as np
+
 
 class DataAttributes:
     """ Substitute for enumeration """
@@ -100,12 +104,27 @@ def data_parser(file:str, fLongitude_list:list=[], fLatitude_list:list=[], fData
             # Adds the data points to the list
             fLongitude_list.append(float(fLongitude)) # x-coord
             fLatitude_list.append(float(fLatitude))   # y-coord
-            # If there are any other data attributes to be displayed, display them here
+            # If there are any other data attributes to be displayed, will add it to the list here
             if iData_Attribute != 0:
                 fData_list.append(float(fData))
+            # If there is any vector data to be displayed, will add it to the list here
             if iVector_Data_Type != 0:
                 fVector_Data_list.append(float(fVector_Data))
 
+
+def data_color_mapping(data_point:float):
+    """
+
+    :param data_point:
+    :return:
+    """
+    pass
+
+# def color_bar():
+#     im = ax.imshow(np.arange(100).reshape((10,10)))
+#     divider = make_axes_locatable(ax)
+#     cax = divider.append_axes("right", size="5%", pad=0.05)
+#     plt.colorbar(im, cax=cax)
 
 class DataMapper:
     """ Plots all the data points for a particular attribute (ex. (lat, long, temp), (lat, long, conductivity) """
@@ -117,8 +136,18 @@ class DataMapper:
         self.file = file
         self.is_heading_plotted = False
         self.is_course_plotted = False
+
+        self.iDate_list = []
+        self.fTime_list = []
         self.fLong_list = []  # x coord
         self.fLat_list = []  # y coord
+        self.fShip_heading_list = []
+        self.fShip_course_list = []
+        self.fShip_speed_list = []
+        self.fTemperature_list = []
+        self.fSalinity_list = []
+        self.fConductivity_list = []
+        self.fFluorescence_list = []
 
         # ***********************************************************************
         # * MAP TILING
@@ -174,10 +203,27 @@ class DataMapper:
         # ***********************************************************************
 
         # Creates lists of longitude and latitude to be passed to self.ax.plot() to be plotted
-        data_parser(self.file, self.fLong_list, self.fLat_list)
+        data_parser(self.file, self.fLong_list, self.fLat_list, self.fSalinity_list, DataAttributes.SALINITY)
 
         # Plots all the points
-        self.ax.plot(self.fLong_list, self.fLat_list, 'bo', markersize=2, transform=ccrs.Geodetic())
+        # self.ax.plot(self.fLong_list, self.fLat_list, color='b', markersize=2, transform=ccrs.PlateCarree())
+        # the 3rd parameter specifies color
+        # s - size, c - color
+        self.ax.scatter(self.fLong_list, self.fLat_list, s=4, c=self.fSalinity_list, cmap='viridis', transform=ccrs.PlateCarree())
+
+
+        # # Colorbar code - IN PROGRESS
+        # # TODO: implement colorbar
+        # ax2 = plt.subplot(111)
+        # im = ax2.imshow(np.arange(100).reshape((10, 10)))
+        # # create an axes on the right side of ax. The width of cax will be 5%
+        # # of ax and the padding between cax and ax will be fixed at 0.05 inch.
+        # divider = make_axes_locatable(ax2)
+        # cax = divider.append_axes("right", size="5%", pad=0.05)
+        # plt.colorbar(im, cax=cax)
+        # p = self.ax.contourf(self.fLong_list, self.fLat_list, self.fSalinity_list[i, ...], transform=ccrs.PlateCarree(), cmap='RdBu')
+        # plt.colorbar(p)
+
 
 
     def plot_ship_heading(self):
