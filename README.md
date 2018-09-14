@@ -46,6 +46,8 @@ conda install numpy
 py test2.py
 ```
 
+GUI (example displays GPS and salinity):
+![example data mapping](https://raw.githubusercontent.com/hershey890/UCLA_Marine_Data_Visual/master/images_github/datamapper2.png)
 
 ----
 Admittedly, there are a lot of steps involved with setting up your environment to run this program, but it allows for the most rapid development of this software.
