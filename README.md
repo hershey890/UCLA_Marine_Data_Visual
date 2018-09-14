@@ -1,3 +1,5 @@
+![logo](https://raw.githubusercontent.com/hershey890/UCLA_Marine_Data_Visual/master/images_github/logo.png)
+
 # UCLA_Marine_Data_Visual
 
 Data visualization application/GUI in development in python for the Marine Operations Program at UCLA. Used to depict Ocean temperature along with GPS data ovelayed on a map. Check out the UCLA Marine Operations Program for which this was developed at: https://dept.atmos.ucla.edu/marineops
