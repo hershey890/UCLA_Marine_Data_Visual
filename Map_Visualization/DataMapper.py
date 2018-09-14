@@ -6,8 +6,9 @@
 
 # TODO: use folium to have dynamic maps
 # TODO: make a GUI that allows for more flexible movement of the plot (this may require folium)
-# TODO: labels on the map
+# TODO: geographic references
 # TODO: get a high quality map of LA/CA region
+# TODO: add a label to the colorbar
 
 ###########################################################################
 #   DATA FORMAT - .txt file
@@ -29,7 +30,6 @@ import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import cartopy.feature as cfeature
 import cartopy.io.img_tiles as cimgt
-import matplotlib.cm as cm
 
 
 class DataAttributes:
@@ -133,6 +133,8 @@ class DataMapper:
         self.file = file
         self.is_heading_plotted = False
         self.is_course_plotted = False
+        self.transformation = ccrs.PlateCarree()
+        self.color_mapping = 'viridis' # TODO: psure I can use a class and ____.viridis
 
         self.iDate_list = []
         self.fTime_list = []
@@ -195,72 +197,86 @@ class DataMapper:
     def plot_GPS(self):
         """ Plots only location data with no other attributes """
 
-        # ***********************************************************************
-        # * READING/SAVING DATA FROM FILE
-        # ***********************************************************************
-
         # Creates lists of longitude and latitude to be passed to self.ax.plot() to be plotted
-        data_parser(self.file, self.fLong_list, self.fLat_list, self.fSalinity_list, DataAttributes.SALINITY)
+        data_parser(self.file, self.fLong_list, self.fLat_list)
 
         # Plots all the points
         # self.ax.plot(self.fLong_list, self.fLat_list, color='b', markersize=2, transform=ccrs.PlateCarree())
-        # the 3rd parameter specifies color
-        # s - size, c - color
-        # self.ax.scatter(self.fLong_list, self.fLat_list, s=4, c=self.fSalinity_list, cmap='viridis', transform=ccrs.PlateCarree())
-        plt.scatter(self.fLong_list, self.fLat_list, s=5, c=self.fSalinity_list, cmap='viridis', transform=ccrs.PlateCarree())
-        plt.colorbar()
+        plt.scatter(self.fLong_list, self.fLat_list, s=6, transform=self.transformation)
 
-        # # Colorbar code - IN PROGRESS
-        # # TODO: implement colorbar
-        # ax2 = plt.subplot(111)
-        # im = ax2.imshow(np.arange(100).reshape((10, 10)))
-        # # create an axes on the right side of ax. The width of cax will be 5%
-        # # of ax and the padding between cax and ax will be fixed at 0.05 inch.
-        # divider = make_axes_locatable(ax2)
-        # cax = divider.append_axes("right", size="5%", pad=0.05)
-        # plt.colorbar(im, cax=cax)
-        # p = self.ax.contourf(self.fLong_list, self.fLat_list, self.fSalinity_list[i, ...], transform=ccrs.PlateCarree(), cmap='RdBu')
-        # plt.colorbar(p)
-
-
-
+    # TODO: make sure to check if any other vector data is to be plotted first
     def plot_ship_heading(self):
         """ Plots GPS data and ship heading in degrees as a vector on top of other data """
         pass
 
-    def remove_ship_heading(self):
-        ''' Removes ship's heading vectors '''
-        # TODO: add check to see if the ships heading is even plotted
-        pass
-
     def plot_ship_course(self):
-        ''' Plots GPS data and ship course over ground as a vector on top of other data '''
-        pass
-
-    def remove_ship_course(self):
-        """ Removes ship's course vectors """
-        # TODO: add check to see if the ships course is even plotted
+        """ Plots GPS data and ship course over ground as a vector on top of other data """
         pass
 
     def plot_speed(self):
         """ Plots GPS data and speed """
-        pass
+
+        # Creates lists of longitude and latitude to be passed to self.ax.plot() to be plotted along with speed
+        data_parser(self.file, self.fLong_list, self.fLat_list, self.fShip_speed_list, DataAttributes.SHIP_SPEED_GROUND)
+
+        # Plots the data
+        # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
+        plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fShip_speed_list, cmap=self.color_mapping,
+                    transform=self.transformation)
+        # Displays the colorbar
+        plt.colorbar()
 
     def plot_temperature(self):
         """ Plots GPS data and temperature """
-        pass
+
+        # Creates lists of longitude and latitude to be passed to self.ax.plot() to be plotted along with temperature
+        data_parser(self.file, self.fLong_list, self.fLat_list, self.fTemperature_list, DataAttributes.TEMPERATURE)
+
+        # Plots the data
+        # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
+        plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fTemperature_list, cmap=self.color_mapping,
+                    transform=self.transformation)
+        # Displays the colorbar
+        plt.colorbar()
 
     def plot_salinity(self):
         """ Plots GPS data and salinity """
-        pass
+
+        # Creates lists of longitude and latitude to be passed to self.ax.plot() to be plotted along with salinity
+        data_parser(self.file, self.fLong_list, self.fLat_list, self.fSalinity_list, DataAttributes.SALINITY)
+
+        # Plots the data
+        # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
+        plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fSalinity_list, cmap=self.color_mapping,
+                    transform=self.transformation)
+        # Displays the colorbar
+        plt.colorbar()
 
     def plot_conductivity(self):
         """ Plots GPS data and conductivity """
-        pass
+
+        # Creates lists of longitude and latitude to be passed to self.ax.plot() to be plotted along with conductivity
+        data_parser(self.file, self.fLong_list, self.fLat_list, self.fConductivity_list, DataAttributes.CONDUCTIVITY)
+
+        # Plots the data
+        # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
+        plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fConductivity_list, cmap=self.color_mapping,
+                    transform=self.transformation)
+        # Displays the colorbar
+        plt.colorbar()
 
     def plot_fluorescence(self):
         """ Plots GPS data and fluorescence """
-        pass
+
+        # Creates lists of longitude and latitude to be passed to self.ax.plot() to be plotted along with fluorescence
+        data_parser(self.file, self.fLong_list, self.fLat_list, self.fFluorescence_list, DataAttributes.FLUORESCENCE)
+
+        # Plots the data
+        # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
+        plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fFluorescence_list, cmap=self.color_mapping,
+                    transform=self.transformation)
+        # Displays the colorbar
+        plt.colorbar()
 
     def display_map(self):
         """ Call after using all plotting functions to display the map """
