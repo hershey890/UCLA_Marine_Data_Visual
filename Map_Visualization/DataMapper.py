@@ -29,10 +29,7 @@ import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 import cartopy.feature as cfeature
 import cartopy.io.img_tiles as cimgt
-
-# Colorbar
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-import numpy as np
+import matplotlib.cm as cm
 
 
 class DataAttributes:
@@ -209,8 +206,9 @@ class DataMapper:
         # self.ax.plot(self.fLong_list, self.fLat_list, color='b', markersize=2, transform=ccrs.PlateCarree())
         # the 3rd parameter specifies color
         # s - size, c - color
-        self.ax.scatter(self.fLong_list, self.fLat_list, s=4, c=self.fSalinity_list, cmap='viridis', transform=ccrs.PlateCarree())
-
+        # self.ax.scatter(self.fLong_list, self.fLat_list, s=4, c=self.fSalinity_list, cmap='viridis', transform=ccrs.PlateCarree())
+        plt.scatter(self.fLong_list, self.fLat_list, s=5, c=self.fSalinity_list, cmap='viridis', transform=ccrs.PlateCarree())
+        plt.colorbar()
 
         # # Colorbar code - IN PROGRESS
         # # TODO: implement colorbar
