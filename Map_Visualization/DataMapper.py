@@ -47,8 +47,8 @@ class DataAttributes:
     CONDUCTIVITY        = 10
     FLUORESCENCE        = 11
 
-def data_parser(file:str, fLongitude_list:list=[], fLatitude_list:list=[], fData_list:list=[], iData_Attribute:int=0,
-                fVector_Data_list:list=[], iVector_Data_Type:int=0):
+# TODO: can simplify this function, there's no need to pass so many lists to it, I can return multiple lists!
+def data_parser(file:str, fLongitude_list:list=[], fLatitude_list:list=[], fData_list:list=[], iData_Attribute:int=0):
     """ Reads the data from the .txt file and stores it in a list for longitude and one for latitude
 
     :param file: string containing the name of the file with the sensor data (must contain the file extension .txt)
@@ -64,7 +64,6 @@ def data_parser(file:str, fLongitude_list:list=[], fLatitude_list:list=[], fData
     fLongitude_list[:]     = []
     fLatitude_list[:]      = []
     fData_list[:]          = []
-    fVector_Data_list[:]   = []
 
     # Opens, closes and reads the file
     with open(file, 'r') as data:
@@ -93,10 +92,6 @@ def data_parser(file:str, fLongitude_list:list=[], fLatitude_list:list=[], fData
                 elif iData_Attribute != 0 and iNumber_commas == iData_Attribute and \
                         (char.isnumeric() or char == '.' or char == '+' or char == '-'):
                     fData += char
-                # If there is another vector data attribute specified, it will be saved in this form
-                if iVector_Data_Type != 0 and iNumber_commas == iVector_Data_Type and \
-                        (char.isnumeric() or char == '.' or char == '+' or char == '-'):
-                    fVector_Data += char
 
             if error_flag:
                 continue
@@ -107,9 +102,6 @@ def data_parser(file:str, fLongitude_list:list=[], fLatitude_list:list=[], fData
             # If there are any other data attributes to be displayed, will add it to the list here
             if iData_Attribute != 0:
                 fData_list.append(float(fData))
-            # If there is any vector data to be displayed, will add it to the list here
-            if iVector_Data_Type != 0:
-                fVector_Data_list.append(float(fVector_Data))
 
 
 class DataMapper:
@@ -136,6 +128,7 @@ class DataMapper:
         self.fSalinity_list = []
         self.fConductivity_list = []
         self.fFluorescence_list = []
+        # self.ax.quiver
 
         # ***********************************************************************
         # * MAP TILING
@@ -209,11 +202,31 @@ class DataMapper:
     # TODO: make sure to check if any other vector data is to be plotted first
     def plot_ship_heading(self):
         """ Plots GPS data and ship heading in degrees as a vector on top of other data """
-        pass
+
+        # Creates lists of longitude and latitude to be passed to self.ax.plot() for plotting along with the ship's course
+        data_parser(self.file, self.fLong_list, self.fLat_list, self.fShip_heading_list,
+                    DataAttributes.SHIP_COURSE_GROUND)
+
+        # Plots the data
+        # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
+        plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fShip_heading_list, cmap=self.color_mapping,
+                    transform=self.transformation)
+        # Displays the colorbar
+        plt.colorbar()
 
     def plot_ship_course(self):
         """ Plots GPS data and ship course over ground as a vector on top of other data """
-        pass
+
+        # Creates lists of longitude and latitude to be passed to self.ax.plot() for plotting along with the ship's course
+        data_parser(self.file, self.fLong_list, self.fLat_list, self.fShip_course_list,
+                    DataAttributes.SHIP_COURSE_GROUND)
+
+        # Plots the data
+        # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
+        plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fShip_course_list, cmap=self.color_mapping,
+                    transform=self.transformation)
+        # Displays the colorbar
+        plt.colorbar()
 
     def plot_speed(self):
         """ Plots GPS data and speed """
