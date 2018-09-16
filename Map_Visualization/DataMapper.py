@@ -139,7 +139,8 @@ class DataMapper:
                     elif iNumber_commas == 4 and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
                         fLatitude += char
                     # If there is another data attribute specified, it will be saved in this form
-                    elif data_attribute != DataAttributes.NO_DATA and iNumber_commas == data_attribute and \
+                    elif (data_attribute != DataAttributes.NO_DATA or DataAttributes.GPS) and \
+                            iNumber_commas == data_attribute and \
                             (char.isnumeric() or char == '.' or char == '+' or char == '-'):
                         fData += char
 
@@ -167,119 +168,39 @@ class DataMapper:
                     self.fShip_course_list.append(float(fData))
 
 
-    def plot_GPS(self):
-        """ Plots only location data with no other attributes """
+    def plot_data(self, data_attribute:DataAttributes=DataAttributes.NO_DATA):
+        # Parses data from file into lists such as fLong_list and fShip_speed_list
+        self.__data_parser(data_attribute)
 
-        # Creates lists of longitude and latitude to be passed to self.ax.plot() to be plotted
-        # self.__data_parser(self.file, self.fLong_list, self.fLat_list)
-        self.__data_parser()
+        # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors (optional),
+        # param 5 - color mapping (optional)
+        if data_attribute == DataAttributes.NO_DATA or data_attribute == DataAttributes.GPS:
+            plt.scatter(self.fLong_list, self.fLat_list, s=6, transform=self.transformation)
+        elif data_attribute == DataAttributes.TEMPERATURE:
+            plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fTemperature_list, cmap=self.color_mapping,
+                        transform=self.transformation)
+        elif data_attribute == DataAttributes.SALINITY:
+            plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fSalinity_list, cmap=self.color_mapping,
+                        transform=self.transformation)
+        elif data_attribute == DataAttributes.FLUORESCENCE:
+            plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fFluorescence_list, cmap=self.color_mapping,
+                        transform=self.transformation)
+        elif data_attribute == DataAttributes.CONDUCTIVITY:
+            plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fConductivity_list, cmap=self.color_mapping,
+                        transform=self.transformation)
+        elif data_attribute == DataAttributes.SHIP_SPEED_GROUND:
+            plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fShip_speed_list, cmap=self.color_mapping,
+                        transform=self.transformation)
+        elif data_attribute == DataAttributes.SHIP_HEADING_DEG:
+            plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fShip_heading_list, cmap=self.color_mapping,
+                        transform=self.transformation)
+        elif data_attribute == DataAttributes.SHIP_COURSE_GROUND:
+            plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fShip_course_list, cmap=self.color_mapping,
+                        transform=self.transformation)
 
-        # Plots all the points
-        # self.ax.plot(self.fLong_list, self.fLat_list, color='b', markersize=2, transform=ccrs.PlateCarree())
-        plt.scatter(self.fLong_list, self.fLat_list, s=6, transform=self.transformation)
-
-
-
-    def plot_ship_heading(self):
-        """ Plots GPS data and ship heading in degrees as a vector on top of other data """
-
-        # Creates lists of longitude and latitude to be passed to self.ax.plot() for plotting along with the ship's course
-        # self.__data_parser(self.file, self.fLong_list, self.fLat_list, self.fShip_heading_list,
-        #             DataAttributes.SHIP_COURSE_GROUND)
-
-        self.__data_parser(data_attribute=DataAttributes.SHIP_HEADING_DEG)
-
-        # Plots the data
-        # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
-        plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fShip_heading_list, cmap=self.color_mapping,
-                    transform=self.transformation)
-        # Displays the colorbar
-        plt.colorbar()
-
-
-    def plot_ship_course(self):
-        """ Plots GPS data and ship course over ground as a vector on top of other data """
-
-        # Creates lists of longitude and latitude to be passed to self.ax.plot() for plotting along with the ship's course
-        self.__data_parser(data_attribute=DataAttributes.SHIP_COURSE_GROUND)
-
-        # Plots the data
-        # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
-        plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fShip_course_list, cmap=self.color_mapping,
-                    transform=self.transformation)
-
-        # Displays the colorbar
-        plt.colorbar()
-
-
-    def plot_speed(self):
-        """ Plots GPS data and speed """
-
-        # Creates lists of longitude and latitude to be passed to self.ax.plot() to be plotted along with speed
-        self.__data_parser(data_attribute=DataAttributes.SHIP_SPEED_GROUND)
-
-        # Plots the data
-        # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
-        plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fShip_speed_list, cmap=self.color_mapping,
-                    transform=self.transformation)
-
-        # Displays the colorbar
-        plt.colorbar()
-
-    def plot_temperature(self):
-        """ Plots GPS data and temperature """
-
-        # Creates lists of longitude and latitude to be passed to self.ax.plot() to be plotted along with temperature
-        self.__data_parser(data_attribute=DataAttributes.TEMPERATURE)
-
-        # Plots the data
-        # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
-        plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fTemperature_list, cmap=self.color_mapping,
-                    transform=self.transformation)
-
-        # Displays the colorbar
-        plt.colorbar()
-
-    def plot_salinity(self):
-        """ Plots GPS data and salinity """
-
-        # Creates lists of longitude and latitude to be passed to self.ax.plot() to be plotted along with salinity
-        self.__data_parser(data_attribute=DataAttributes.SALINITY)
-
-        # Plots the data
-        # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
-        plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fSalinity_list, cmap=self.color_mapping,
-                    transform=self.transformation)
-
-        # Displays the colorbar
-        plt.colorbar()
-
-    def plot_conductivity(self):
-        """ Plots GPS data and conductivity """
-
-        # Creates lists of longitude and latitude to be passed to self.ax.plot() to be plotted along with conductivity
-        self.__data_parser(data_attribute=DataAttributes.CONDUCTIVITY)
-
-        # Plots the data
-        # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
-        plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fConductivity_list, cmap=self.color_mapping,
-                    transform=self.transformation)
-
-        # Displays the colorbar
-        plt.colorbar()
-
-    def plot_fluorescence(self):
-        """ Plots GPS data and fluorescence """
-
-        # Creates lists of longitude and latitude to be passed to self.ax.plot() to be plotted along with fluorescence
-        self.__data_parser(data_attribute=DataAttributes.FLUORESCENCE)
-
-        # Plots the data
-        # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
-        plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fFluorescence_list, cmap=self.color_mapping,
-                    transform=self.transformation)
-        # Displays the colorbar
-        plt.colorbar()
+        # Plots the colorbar for all data attributes except for GPS only
+        if data_attribute != DataAttributes.NO_DATA and data_attribute != DataAttributes.GPS:
+            plt.colorbar()
 
     def display_map(self):
         """ Call after using all plotting functions to display the map """
@@ -377,28 +298,32 @@ class GUI(tk.Frame):
 
         # Plots the data depending on what DataAttribute is passed to the function
         if data_attribute == DataAttributes.GPS:
-            self.Map.plot_GPS()
+            self.Map.plot_data(data_attribute=DataAttributes.GPS)
+            # self.Map.plot_GPS()
         elif data_attribute == DataAttributes.TEMPERATURE:
-            self.Map.plot_temperature()
+            self.Map.plot_data(data_attribute=DataAttributes.TEMPERATURE)
+            # self.Map.plot_temperature()
         elif data_attribute == DataAttributes.FLUORESCENCE:
-            self.Map.plot_fluorescence()
+            self.Map.plot_data(data_attribute=DataAttributes.FLUORESCENCE)
+            # self.Map.plot_fluorescence()
         elif data_attribute == DataAttributes.SALINITY:
-            self.Map.plot_salinity()
+            self.Map.plot_data(data_attribute=DataAttributes.SALINITY)
+            # self.Map.plot_salinity()
         elif data_attribute == DataAttributes.CONDUCTIVITY:
-            self.Map.plot_conductivity()
+            self.Map.plot_data(data_attribute=DataAttributes.CONDUCTIVITY)
+            # self.Map.plot_conductivity()
         elif data_attribute == DataAttributes.SHIP_HEADING_DEG:
-            self.Map.plot_ship_heading()
+            self.Map.plot_data(data_attribute=DataAttributes.SHIP_HEADING_DEG)
+            # self.Map.plot_ship_heading()
         elif data_attribute == DataAttributes.SHIP_COURSE_GROUND:
-            self.Map.plot_ship_course()
+            self.Map.plot_data(data_attribute=DataAttributes.SHIP_COURSE_GROUND)
+            # self.Map.plot_ship_course()
         elif data_attribute == DataAttributes.SHIP_SPEED_GROUND:
-            self.Map.plot_ship_course()
+            self.Map.plot_data(data_attribute=DataAttributes.SHIP_SPEED_GROUND)
+            # self.Map.plot_ship_course()
         else:
             print(data_attribute, "ERROR")
             # TODO: raise arn error/error dialogue box here
 
         # Displays the map
         self.Map.display_map()
-
-# root = tk.Tk()
-# app = GUI(master=root)
-# app.mainloop()
