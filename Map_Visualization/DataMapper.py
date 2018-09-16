@@ -36,7 +36,7 @@ import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 from cartopy.io.img_tiles import OSM
 
-class DataAttributes:
+class DataAttributes(int):
     """ Substitute for enumeration """
     DATE                = 1
     TIME                = 2
@@ -49,6 +49,7 @@ class DataAttributes:
     SALINITY            = 9
     CONDUCTIVITY        = 10
     FLUORESCENCE        = 11
+    GPS                 = 12
 
 
 # TODO: can simplify this function, there's no need to pass so many lists to it, I can return multiple lists!
@@ -314,18 +315,34 @@ class GUI(tk.Frame):
         self.Map = DataMapper()
         self.create_widgets()
 
-        self.pressed = False
+        self.is_pressed = False
+        self.is_GPS_pressed = False
+        self.is_temperature_pressed = False
+        self.is_fluorescence_pressed = False
+        self.is_speed_pressed = False
+        self.is_salinity_pressed = False
+        self.is_conductivity_pressed = False
+        self.is_ship_heading_pressed = False
+        self.is_ship_course_pressed = False
+
 
     def create_widgets(self):
         # Creates Button Instances
-        self.plot_GPS_button = tk.Button(self, text="GPS")
-        self.plot_temperature_button = tk.Button(self, text="Temperature")
-        self.plot_fluorescence_button = tk.Button(self, text="Fluorescence")
-        self.plot_speed_button = tk.Button(self, text="Speed")
-        self.plot_salinity_button = tk.Button(self, text="Salinity")
-        self.plot_conductivity_button = tk.Button(self, text="Conductivity")
-        self.plot_ship_heading_button = tk.Button(self, text="Ship Heading")
-        self.plot_ship_course_button = tk.Button(self, text="Ship Course")
+        self.plot_GPS_button = tk.Button(self, text="GPS", command=(lambda: self.plot_data(DataAttributes.GPS)))
+        self.plot_temperature_button = tk.Button(self, text="Temperature",
+                                                 command=(lambda: self.plot_data(DataAttributes.TEMPERATURE)))
+        self.plot_fluorescence_button = tk.Button(self, text="Fluorescence",
+                                                  command=(lambda: self.plot_data(DataAttributes.FLUORESCENCE))) # check
+        self.plot_speed_button = tk.Button(self, text="Speed",
+                                           command=(lambda: self.plot_data(DataAttributes.SHIP_SPEED_GROUND))) # doesnt work
+        self.plot_salinity_button = tk.Button(self, text="Salinity",
+                                              command=(lambda: self.plot_data(DataAttributes.SALINITY)))
+        self.plot_conductivity_button = tk.Button(self, text="Conductivity",
+                                                  command=(lambda: self.plot_data(DataAttributes.CONDUCTIVITY)))
+        self.plot_ship_heading_button = tk.Button(self, text="Ship Heading",
+                                                  command=(lambda: self.plot_data(DataAttributes.SHIP_HEADING_DEG)))
+        self.plot_ship_course_button = tk.Button(self, text="Ship Course",
+                                                 command=(lambda: self.plot_data(DataAttributes.SHIP_COURSE_GROUND)))
 
         # Positions the buttons within the window
         self.plot_GPS_button.pack(side="left", padx=5, pady=5)
@@ -337,28 +354,54 @@ class GUI(tk.Frame):
         self.plot_ship_heading_button.pack(side="left", padx=5, pady=5)
         self.plot_ship_course_button.pack(side="left", padx=5, pady=5)
 
-        self.plot_GPS_button["command"] = self.plot_GPS
-
         # Code for quiting the program
         self.quit = tk.Button(self, text="QUIT", fg="red", command=root.destroy)
         self.quit.pack(side="bottom", padx=5, pady=5)
 
-    def say_hi(self):
-        print("hi there, everyone!")
 
     def plot_GPS(self):
-        if not self.pressed:
+        if not self.is_GPS_pressed:
             print("button pressed")
             # root.destroy()
             self.Map.plot_GPS()
             self.Map.display_map()
-            self.pressed = True
+            self.is_GPS_pressed = True
         else:
             print("button pressed 2")
             del self.Map
             self.Map = DataMapper()
             self.Map.plot_GPS()
             self.Map.display_map()
+
+    def plot_data(self, data_attribute:int): # data_type:str):
+        # If the button has been pressed once before, delete the previous Map instance and create a new one
+        if self.is_pressed:
+            del self.Map
+            self.Map = DataMapper()
+        else:
+            self.is_pressed = True
+
+        if data_attribute == DataAttributes.GPS:
+            self.Map.plot_GPS()
+        elif data_attribute == DataAttributes.TEMPERATURE:
+            self.Map.plot_temperature()
+        elif data_attribute == DataAttributes.FLUORESCENCE:
+            self.Map.plot_fluorescence()
+        elif data_attribute == DataAttributes.SALINITY:
+            self.Map.plot_salinity()
+        elif data_attribute == DataAttributes.CONDUCTIVITY:
+            self.Map.plot_conductivity()
+        elif data_attribute == DataAttributes.SHIP_HEADING_DEG:
+            self.Map.plot_ship_heading()
+        elif data_attribute == DataAttributes.SHIP_COURSE_GROUND:
+            self.Map.plot_ship_course()
+        elif data_attribute == DataAttributes.SHIP_SPEED_GROUND:
+            self.Map.plot_ship_course()
+        else:
+            print(data_attribute, "ERROR")
+            # TODO: raise arn error/error dialogue box here
+
+        self.Map.display_map()
 
 root = tk.Tk()
 app = GUI(master=root)
