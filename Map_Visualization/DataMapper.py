@@ -8,7 +8,7 @@
 # TODO: make a GUI that allows for more flexible movement of the plot (this may require folium)
 # TODO: get a high quality map of LA/CA region
 # TODO: add a label to the colorbar
-# TODO: bugs in temperature, conductivity, and fluorescence
+# TODO: add vectors/arrows for ship heading and ship course
 
 ###########################################################################
 #   DATA FORMAT - .txt file
@@ -26,12 +26,15 @@
 #   Column 12: Fluorescence
 ###########################################################################
 
+# Libraries used for the tkinter GUI that pops up before the map pops up
+import tkinter as tk
+from tkinter import filedialog
+from tkinter import messagebox
+
+# Libraries used for displaying the map
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
-import cartopy.feature as cfeature
-import cartopy.io.img_tiles as cimgt
 from cartopy.io.img_tiles import OSM
-
 
 class DataAttributes:
     """ Substitute for enumeration """
@@ -46,6 +49,7 @@ class DataAttributes:
     SALINITY            = 9
     CONDUCTIVITY        = 10
     FLUORESCENCE        = 11
+
 
 # TODO: can simplify this function, there's no need to pass so many lists to it, I can return multiple lists!
 def data_parser(file:str, fLongitude_list:list=[], fLatitude_list:list=[], fData_list:list=[], iData_Attribute:int=0):
@@ -296,3 +300,66 @@ class DataMapper:
     def display_map(self):
         """ Call after using all plotting functions to display the map """
         plt.show()
+
+
+class GUI(tk.Frame):
+    """Creates a GUI to allow the user to use the functions from the DataMapper class without having to look at code.
+
+    Code based on examples from: https://docs.python.org/3/library/tkinter.html
+    """
+
+    def __init__(self, master=None):
+        super().__init__(master)
+        self.pack()
+        self.Map = DataMapper()
+        self.create_widgets()
+
+        self.pressed = False
+
+    def create_widgets(self):
+        # Creates Button Instances
+        self.plot_GPS_button = tk.Button(self, text="GPS")
+        self.plot_temperature_button = tk.Button(self, text="Temperature")
+        self.plot_fluorescence_button = tk.Button(self, text="Fluorescence")
+        self.plot_speed_button = tk.Button(self, text="Speed")
+        self.plot_salinity_button = tk.Button(self, text="Salinity")
+        self.plot_conductivity_button = tk.Button(self, text="Conductivity")
+        self.plot_ship_heading_button = tk.Button(self, text="Ship Heading")
+        self.plot_ship_course_button = tk.Button(self, text="Ship Course")
+
+        # Positions the buttons within the window
+        self.plot_GPS_button.pack(side="left", padx=5, pady=5)
+        self.plot_temperature_button.pack(side="left", padx=5, pady=5)
+        self.plot_fluorescence_button.pack(side="left", padx=5, pady=5)
+        self.plot_speed_button.pack(side="left", padx=5, pady=5)
+        self.plot_salinity_button.pack(side="left", padx=5, pady=5)
+        self.plot_conductivity_button.pack(side="left", padx=5, pady=5)
+        self.plot_ship_heading_button.pack(side="left", padx=5, pady=5)
+        self.plot_ship_course_button.pack(side="left", padx=5, pady=5)
+
+        self.plot_GPS_button["command"] = self.plot_GPS
+
+        # Code for quiting the program
+        self.quit = tk.Button(self, text="QUIT", fg="red", command=root.destroy)
+        self.quit.pack(side="bottom", padx=5, pady=5)
+
+    def say_hi(self):
+        print("hi there, everyone!")
+
+    def plot_GPS(self):
+        if not self.pressed:
+            print("button pressed")
+            # root.destroy()
+            self.Map.plot_GPS()
+            self.Map.display_map()
+            self.pressed = True
+        else:
+            print("button pressed 2")
+            del self.Map
+            self.Map = DataMapper()
+            self.Map.plot_GPS()
+            self.Map.display_map()
+
+root = tk.Tk()
+app = GUI(master=root)
+app.mainloop()
