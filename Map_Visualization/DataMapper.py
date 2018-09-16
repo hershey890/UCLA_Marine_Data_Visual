@@ -4,8 +4,6 @@
 # https://github.com/SciTools/cartopy/issues/1048
 # Code for downloading tiles for mapping online: https://scitools.org.uk/cartopy/docs/latest/gallery/eyja_volcano.html
 
-# TODO: make a GUI that allows for more flexible movement of the plot
-# TODO: get a high quality map of LA/CA region
 # TODO: add a label to the colorbar
 # TODO: add vectors/arrows for ship heading and ship course
 # TODO: add descriptions/text to the GUI at the start
@@ -31,6 +29,7 @@
 
 # Libraries used for the tkinter GUI that pops up before the map pops up
 import tkinter as tk
+from tkinter import filedialog
 
 # Libraries used for displaying the map
 import cartopy.crs as ccrs
@@ -58,7 +57,7 @@ class DataMapper:
     """ Plots all the data points for a particular attribute (ex. (lat, long, temp), (lat, long, conductivity) """
 
     # TODO: add a method of inputting the file
-    def __init__(self, file='SampleData.txt'):
+    def __init__(self, file:str):
         self.file = file
         self.is_heading_plotted = False
         self.is_course_plotted = False
@@ -216,10 +215,10 @@ class GUI(tk.Frame):
     def __init__(self, master=tk.Tk()):
         super().__init__(master)
         self.pack()
-        self.Map = DataMapper()
+        # self.Map = DataMapper()
+        # self.filename = ""
         self.create_widgets()
         self.master=master
-
 
         self.is_pressed = False
         self.is_GPS_pressed = False
@@ -233,6 +232,11 @@ class GUI(tk.Frame):
 
 
     def create_widgets(self):
+        # Button for selecting the *.txt file containing the data to be inputted
+        # Gets the file name as self.filename
+        self.choose_file_button = tk.Button(self, text="Input File", command=self.__file_dialog)
+        self.choose_file_button.pack(side="bottom")
+
         # Creates Button Instances
             # text: defines the text to be displayed on the button
             # command: defines the function to be executed when the button is pressed
@@ -264,22 +268,7 @@ class GUI(tk.Frame):
 
         # Button for quitting(ending) the application
         self.quit = tk.Button(self, text="QUIT", fg="red", command=self.master.destroy)
-        self.quit.pack(side="bottom", padx=5, pady=5)
-
-
-    def plot_GPS(self):
-        if not self.is_GPS_pressed:
-            print("button pressed")
-            # root.destroy()
-            self.Map.plot_GPS()
-            self.Map.display_map()
-            self.is_GPS_pressed = True
-        else:
-            print("button pressed 2")
-            del self.Map
-            self.Map = DataMapper()
-            self.Map.plot_GPS()
-            self.Map.display_map()
+        self.quit.pack(side="left")
 
     def display_map(self, data_attribute:int):
         """ Displays a map corresponding to the the button pressed
@@ -327,3 +316,11 @@ class GUI(tk.Frame):
 
         # Displays the map
         self.Map.display_map()
+
+
+    def __file_dialog(self)->str:
+        self.filename = filedialog.askopenfilename(initialdir = "/", title = "Select file",
+                                                   filetypes=(("txt files","*.txt"),("all files","*.*")))
+        self.Map = DataMapper(self.filename)
+        # print(self.filename)
+        # return self.filename
