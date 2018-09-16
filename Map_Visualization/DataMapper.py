@@ -4,11 +4,14 @@
 # https://github.com/SciTools/cartopy/issues/1048
 # Code for downloading tiles for mapping online: https://scitools.org.uk/cartopy/docs/latest/gallery/eyja_volcano.html
 
-# TODO: use folium to have dynamic maps
-# TODO: make a GUI that allows for more flexible movement of the plot (this may require folium)
+# TODO: make a GUI that allows for more flexible movement of the plot
 # TODO: get a high quality map of LA/CA region
 # TODO: add a label to the colorbar
 # TODO: add vectors/arrows for ship heading and ship course
+# TODO: add descriptions/text to the GUI at the start
+# TODO: add a error dialogue box if there are issues
+# TODO: add something to the GUI that allows you to select a file through there
+# TODO: change the name of the window for the map, i.e. more descriptive than "Figure 1"
 
 ###########################################################################
 #   DATA FORMAT - .txt file
@@ -28,8 +31,6 @@
 
 # Libraries used for the tkinter GUI that pops up before the map pops up
 import tkinter as tk
-from tkinter import filedialog
-from tkinter import messagebox
 
 # Libraries used for displaying the map
 import cartopy.crs as ccrs
@@ -112,8 +113,6 @@ def data_parser(file:str, fLongitude_list:list=[], fLatitude_list:list=[], fData
 class DataMapper:
     """ Plots all the data points for a particular attribute (ex. (lat, long, temp), (lat, long, conductivity) """
 
-    # Remember that there are data points with NaN
-
     # TODO: add a method of inputting the file
     def __init__(self, file='SampleData.txt'):
         self.file = file
@@ -136,62 +135,30 @@ class DataMapper:
         # self.ax.quiver
 
         # ***********************************************************************
-        # * MAP TILING
-        # * https://scitools.org.uk/cartopy/docs/latest/gallery/eyja_volcano.html
-        # * https://scitools.org.uk/cartopy/docs/v0.15/examples/eyja_volcano.html
-        # * https://scitools.org.uk/cartopy/docs/v0.13/examples/eyja_volcano.html
+        # * MAP SETUP
         # ***********************************************************************
-        # TODO: explore the different kinds of map tiling
 
-        # Create a Stamen Terrain instance
-        # stamen_terrain = cimgt.StamenTerrain()
-        # stamen_terrain = cimgt.OSM()
+        # Get map tiles from the OpenStreetMap Server, map tiles allow for maps to be loaded from servers
         osm_tiles = OSM()
 
         # Changes the display size - specifically figsize=(x,y)
         fig = plt.figure(figsize=(12, 6))
 
         # Create a GeoAxes in the tile's projection
-        # self.ax = fig.add_subplot(1, 1, 1, projection=stamen_terrain.crs)
         self.ax = plt.axes(projection=osm_tiles.crs)
 
+        # Reduces the margin sizes
         fig.tight_layout()
-
-        # Sets margins around data
-        # self.ax.set_xmargin(0.05)
-        # self.ax.set_ymargin(0.05)
 
         # Limit the extent of the map to a specific region based on latitude/longitude
         # TODO: make the margins flexible and based on the data points
-        # self.ax.set_extent([-124, -113, 31, 38], crs=ccrs.Geodetic())
         self.ax.set_extent([-118.54, -118.35, 33.715, 34.02], crs=ccrs.PlateCarree())
-        # self.ax.set_extent([-118.45, -118.37, 33.73, 33.89])
 
-
-        # Add the Stamen data at zoom level 9
+        # Add the Stamen data at zoom level 12. Zoom level 1 is the most zoomed out while Zoom level 14 would be
+        # most zoomed in. The most I've gotten to work is 12. Additionally, the higher the zoom level, the longer
+        # the amount of time required to load the mao Finally, interpolation='spline36' makes the map render
+        # better for some reason.
         self.ax.add_image(osm_tiles, 12, interpolation='spline36')
-        # self.ax.coastlines('10m')
-        # self.ax = plt.axes(projection=ccrs.PlateCarree())
-
-        # ***********************************************************************
-        # * MAP FORMATTING
-        # ***********************************************************************
-        # Province borders
-        # states_provinces = cfeature.NaturalEarthFeature(
-        #     category='cultural',
-        #     name='admin_1_states_provinces_lines',
-        #     scale='50m',
-        #     facecolor='none')
-        # self.ax.add_feature(states_provinces, edgecolor='gray')
-
-        # Adding coastlines
-        # self.ax.coastlines(resolution='10m', color='black', linewidth=1)
-            # These also work but the resolution seems to be lower
-            # self.ax.add_feature(cfeature.LAND)
-            # self.ax.add_feature(cfeature.COASTLINE)
-
-        # Plots country borders
-        # self.ax.add_feature(cfeature.BORDERS)
 
 
     def plot_GPS(self):
@@ -204,7 +171,7 @@ class DataMapper:
         # self.ax.plot(self.fLong_list, self.fLat_list, color='b', markersize=2, transform=ccrs.PlateCarree())
         plt.scatter(self.fLong_list, self.fLat_list, s=6, transform=self.transformation)
 
-    # TODO: make sure to check if any other vector data is to be plotted first
+
     def plot_ship_heading(self):
         """ Plots GPS data and ship heading in degrees as a vector on top of other data """
 
@@ -219,6 +186,7 @@ class DataMapper:
         # Displays the colorbar
         plt.colorbar()
 
+
     def plot_ship_course(self):
         """ Plots GPS data and ship course over ground as a vector on top of other data """
 
@@ -232,6 +200,7 @@ class DataMapper:
                     transform=self.transformation)
         # Displays the colorbar
         plt.colorbar()
+
 
     def plot_speed(self):
         """ Plots GPS data and speed """
@@ -309,11 +278,13 @@ class GUI(tk.Frame):
     Code based on examples from: https://docs.python.org/3/library/tkinter.html
     """
 
-    def __init__(self, master=None):
+    def __init__(self, master=tk.Tk()):
         super().__init__(master)
         self.pack()
         self.Map = DataMapper()
         self.create_widgets()
+        self.master=master
+
 
         self.is_pressed = False
         self.is_GPS_pressed = False
@@ -328,21 +299,23 @@ class GUI(tk.Frame):
 
     def create_widgets(self):
         # Creates Button Instances
-        self.plot_GPS_button = tk.Button(self, text="GPS", command=(lambda: self.plot_data(DataAttributes.GPS)))
+            # text: defines the text to be displayed on the button
+            # command: defines the function to be executed when the button is pressed
+        self.plot_GPS_button = tk.Button(self, text="GPS", command=(lambda: self.display_map(DataAttributes.GPS)))
         self.plot_temperature_button = tk.Button(self, text="Temperature",
-                                                 command=(lambda: self.plot_data(DataAttributes.TEMPERATURE)))
+                                                 command=(lambda: self.display_map(DataAttributes.TEMPERATURE)))
         self.plot_fluorescence_button = tk.Button(self, text="Fluorescence",
-                                                  command=(lambda: self.plot_data(DataAttributes.FLUORESCENCE))) # check
+                                                  command=(lambda: self.display_map(DataAttributes.FLUORESCENCE)))
         self.plot_speed_button = tk.Button(self, text="Speed",
-                                           command=(lambda: self.plot_data(DataAttributes.SHIP_SPEED_GROUND))) # doesnt work
+                                           command=(lambda: self.display_map(DataAttributes.SHIP_SPEED_GROUND)))
         self.plot_salinity_button = tk.Button(self, text="Salinity",
-                                              command=(lambda: self.plot_data(DataAttributes.SALINITY)))
+                                              command=(lambda: self.display_map(DataAttributes.SALINITY)))
         self.plot_conductivity_button = tk.Button(self, text="Conductivity",
-                                                  command=(lambda: self.plot_data(DataAttributes.CONDUCTIVITY)))
+                                                  command=(lambda: self.display_map(DataAttributes.CONDUCTIVITY)))
         self.plot_ship_heading_button = tk.Button(self, text="Ship Heading",
-                                                  command=(lambda: self.plot_data(DataAttributes.SHIP_HEADING_DEG)))
+                                                  command=(lambda: self.display_map(DataAttributes.SHIP_HEADING_DEG)))
         self.plot_ship_course_button = tk.Button(self, text="Ship Course",
-                                                 command=(lambda: self.plot_data(DataAttributes.SHIP_COURSE_GROUND)))
+                                                 command=(lambda: self.display_map(DataAttributes.SHIP_COURSE_GROUND)))
 
         # Positions the buttons within the window
         self.plot_GPS_button.pack(side="left", padx=5, pady=5)
@@ -354,8 +327,8 @@ class GUI(tk.Frame):
         self.plot_ship_heading_button.pack(side="left", padx=5, pady=5)
         self.plot_ship_course_button.pack(side="left", padx=5, pady=5)
 
-        # Code for quiting the program
-        self.quit = tk.Button(self, text="QUIT", fg="red", command=root.destroy)
+        # Button for quitting(ending) the application
+        self.quit = tk.Button(self, text="QUIT", fg="red", command=self.master.destroy)
         self.quit.pack(side="bottom", padx=5, pady=5)
 
 
@@ -373,14 +346,22 @@ class GUI(tk.Frame):
             self.Map.plot_GPS()
             self.Map.display_map()
 
-    def plot_data(self, data_attribute:int): # data_type:str):
-        # If the button has been pressed once before, delete the previous Map instance and create a new one
+    def display_map(self, data_attribute:int):
+        """ Displays a map corresponding to the the button pressed
+
+        :param data_attribute: pass a member variable from class DataAttributes to specify the data attribute
+        to be displayed
+        :return: nothing
+        """
+        # Matplotlib/cartopy somehow has issues plotting things multiple times, therefore after a button
+        # is clicked once, the previous Map = DataMapper() instance is deleted and a new one is created
         if self.is_pressed:
             del self.Map
             self.Map = DataMapper()
         else:
             self.is_pressed = True
 
+        # Plots the data depending on what DataAttribute is passed to the function
         if data_attribute == DataAttributes.GPS:
             self.Map.plot_GPS()
         elif data_attribute == DataAttributes.TEMPERATURE:
@@ -401,8 +382,9 @@ class GUI(tk.Frame):
             print(data_attribute, "ERROR")
             # TODO: raise arn error/error dialogue box here
 
+        # Displays the map
         self.Map.display_map()
 
-root = tk.Tk()
-app = GUI(master=root)
-app.mainloop()
+# root = tk.Tk()
+# app = GUI(master=root)
+# app.mainloop()
