@@ -6,7 +6,7 @@ Data visualization application/GUI in development in python for the Marine Opera
 
 
 ## Setup
-To setup your environment to run this program, you must first install the following python packages: matplotlib, and cartopy. If you already have any of these installed you can just skip that step. Be patient, as installing some of these packages can take some time. Everytime conda asks you to Proceed([y]/n)?, type in y (read the prompt it gives you and only follow this within reason). An internet connection is required for the setup.
+To setup your environment to run this program, you must first install the following python packages: matplotlib, and cartopy. If you already have any of these installed you can just skip this step. You can use whatever method you'd like to install these packages, but I'm just giving the method I used here. Be patient, as installing some of these packages can take some time. Everytime conda asks you to Proceed([y]/n)?, type in y (read the prompt it gives you and only follow this within reason). An internet connection is required for the setup.
 1. Make sure you have python installed first
 2. Install conda (specifically minoconda, although anaconda also works, it just takes longer to install and has unneeded packages) from https://conda.io/miniconda.html. 
 3. Open anaconda (do not close any pop ups while anaconda is being installed as this can cause issues)
@@ -39,11 +39,11 @@ conda install numpy
 
 
 ## Running the program
-1. Put test2.py, DataMapper.py, and SampleData.txt in the same file
+1. Put main.py, DataMapper.py, and SampleData.txt in the same file
 2. Open up command prompt, powershell, or terminal and navigate to the folder all the above programs are located in (should work using the cd command)
 3. Run the code with:
 ```
-py test2.py
+py main.py
 ```
 
 GUI (example displays GPS and salinity):
