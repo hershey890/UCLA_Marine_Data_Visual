@@ -39,6 +39,7 @@ from cartopy.io.img_tiles import OSM
 
 class DataAttributes(int):
     """ Substitute for enumeration """
+    NO_DATA             = -1
     DATE                = 1
     TIME                = 2
     GPS_LONGITUDE       = 3
@@ -51,63 +52,6 @@ class DataAttributes(int):
     CONDUCTIVITY        = 10
     FLUORESCENCE        = 11
     GPS                 = 12
-
-
-# TODO: can simplify this function, there's no need to pass so many lists to it, I can return multiple lists!
-def data_parser(file:str, fLongitude_list:list=[], fLatitude_list:list=[], fData_list:list=[], iData_Attribute:int=0):
-    """ Reads the data from the .txt file and stores it in a list for longitude and one for latitude
-
-    :param file: string containing the name of the file with the sensor data (must contain the file extension .txt)
-    :param fLongitude_list: pass an empty list that will be filled with all the longitudinal data points
-    :param fLatitude_list: pass an empty list that will be filled with all the latitude data points
-    :param fData_list: stores an optional data attribute to be displayed (i.e. temperature, salinity,
-           conductivity, fluorescence), ex. DataAttributes.SALINITY
-    :param iData_Attribute: pass a member variables (8-11) from DataAttributes to determine which one is plotted
-    :return: void - modifies the lists passed to the function
-    """
-
-    # Clears the data in the lists (using fLongitude_list = [] redeclares the list which causes issues)
-    fLongitude_list[:]     = []
-    fLatitude_list[:]      = []
-    fData_list[:]          = []
-
-    # Opens, closes and reads the file
-    with open(file, 'r') as data:
-        # Iterates through lines in the file
-        for line in data:
-            iNumber_commas = 0
-            fLongitude = ''
-            fLatitude = ''
-            fData = ''
-            fVector_Data = ''
-            error_flag = False
-
-            # Reads through a single line to save the latitude and longitude
-            for char in line:
-                # ERROR: if the line contains NaN just skip it
-                if char == 'N':
-                    error_flag = True
-                    break
-                if char == ',':
-                    iNumber_commas += 1
-                elif iNumber_commas == 3 and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
-                    fLongitude += char
-                elif iNumber_commas == 4 and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
-                    fLatitude += char
-                # If there is another data attribute specified, it will be saved in this form
-                elif iData_Attribute != 0 and iNumber_commas == iData_Attribute and \
-                        (char.isnumeric() or char == '.' or char == '+' or char == '-'):
-                    fData += char
-
-            if error_flag:
-                continue
-
-            # Adds the data points to the list
-            fLongitude_list.append(float(fLongitude)) # x-coord
-            fLatitude_list.append(float(fLatitude))   # y-coord
-            # If there are any other data attributes to be displayed, will add it to the list here
-            if iData_Attribute != 0:
-                fData_list.append(float(fData))
 
 
 class DataMapper:
@@ -132,7 +76,6 @@ class DataMapper:
         self.fSalinity_list = []
         self.fConductivity_list = []
         self.fFluorescence_list = []
-        # self.ax.quiver
 
         # ***********************************************************************
         # * MAP SETUP
@@ -160,24 +103,91 @@ class DataMapper:
         # better for some reason.
         self.ax.add_image(osm_tiles, 12, interpolation='spline36')
 
+    # TODO: can simplify this function, there's no need to pass so many lists to it, I can return multiple lists!
+    def __data_parser(self, data_attribute:DataAttributes=DataAttributes.NO_DATA):
+        """ Reads the data from the .txt file and stores it in a list for longitude and one for latitude
+
+        :param file: string containing the name of the file with the sensor data (must contain the file extension .txt)
+        :param fLongitude_list: pass an empty list that will be filled with all the longitudinal data points
+        :param fLatitude_list: pass an empty list that will be filled with all the latitude data points
+        :param fData_list: stores an optional data attribute to be displayed (i.e. temperature, salinity,
+               conductivity, fluorescence), ex. DataAttributes.SALINITY
+        :param iData_Attribute: pass a member variables (8-11) from DataAttributes to determine which one is plotted
+        :return: void - modifies the lists passed to the function
+        """
+
+        # Opens, closes and reads the file
+        with open(self.file, 'r') as data:
+            # Iterates through lines in the file
+            for line in data:
+                iNumber_commas = 0
+                fLongitude = ''
+                fLatitude = ''
+                fData = ''
+                error_flag = False
+
+                # Reads through a single line to save the latitude and longitude
+                for char in line:
+                    # ERROR: if the line contains NaN just skip it
+                    if char == 'N':
+                        error_flag = True
+                        break
+                    if char == ',':
+                        iNumber_commas += 1
+                    elif iNumber_commas == 3 and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
+                        fLongitude += char
+                    elif iNumber_commas == 4 and (char.isnumeric() or char == '.' or char == '+' or char == '-'):
+                        fLatitude += char
+                    # If there is another data attribute specified, it will be saved in this form
+                    elif data_attribute != DataAttributes.NO_DATA and iNumber_commas == data_attribute and \
+                            (char.isnumeric() or char == '.' or char == '+' or char == '-'):
+                        fData += char
+
+                if error_flag:
+                    continue
+
+                # Adds the data points to the list
+                self.fLat_list.append(float(fLatitude))
+                self.fLong_list.append(float(fLongitude))
+
+                # If there are any other data attributes to be displayed, will add it to the list here
+                if data_attribute == DataAttributes.TEMPERATURE:
+                    self.fTemperature_list.append(float(fData))
+                elif data_attribute == DataAttributes.SALINITY:
+                    self.fSalinity_list.append(float(fData))
+                elif data_attribute == DataAttributes.FLUORESCENCE:
+                    self.fFluorescence_list.append(float(fData))
+                elif data_attribute == DataAttributes.CONDUCTIVITY:
+                    self.fConductivity_list.append(float(fData))
+                elif data_attribute == DataAttributes.SHIP_SPEED_GROUND:
+                    self.fShip_speed_list.append(float(fData))
+                elif data_attribute == DataAttributes.SHIP_HEADING_DEG:
+                    self.fShip_heading_list.append(float(fData))
+                elif data_attribute == DataAttributes.SHIP_COURSE_GROUND:
+                    self.fShip_course_list.append(float(fData))
+
 
     def plot_GPS(self):
         """ Plots only location data with no other attributes """
 
         # Creates lists of longitude and latitude to be passed to self.ax.plot() to be plotted
-        data_parser(self.file, self.fLong_list, self.fLat_list)
+        # self.__data_parser(self.file, self.fLong_list, self.fLat_list)
+        self.__data_parser()
 
         # Plots all the points
         # self.ax.plot(self.fLong_list, self.fLat_list, color='b', markersize=2, transform=ccrs.PlateCarree())
         plt.scatter(self.fLong_list, self.fLat_list, s=6, transform=self.transformation)
 
 
+
     def plot_ship_heading(self):
         """ Plots GPS data and ship heading in degrees as a vector on top of other data """
 
         # Creates lists of longitude and latitude to be passed to self.ax.plot() for plotting along with the ship's course
-        data_parser(self.file, self.fLong_list, self.fLat_list, self.fShip_heading_list,
-                    DataAttributes.SHIP_COURSE_GROUND)
+        # self.__data_parser(self.file, self.fLong_list, self.fLat_list, self.fShip_heading_list,
+        #             DataAttributes.SHIP_COURSE_GROUND)
+
+        self.__data_parser(data_attribute=DataAttributes.SHIP_HEADING_DEG)
 
         # Plots the data
         # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
@@ -191,13 +201,13 @@ class DataMapper:
         """ Plots GPS data and ship course over ground as a vector on top of other data """
 
         # Creates lists of longitude and latitude to be passed to self.ax.plot() for plotting along with the ship's course
-        data_parser(self.file, self.fLong_list, self.fLat_list, self.fShip_course_list,
-                    DataAttributes.SHIP_COURSE_GROUND)
+        self.__data_parser(data_attribute=DataAttributes.SHIP_COURSE_GROUND)
 
         # Plots the data
         # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
         plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fShip_course_list, cmap=self.color_mapping,
                     transform=self.transformation)
+
         # Displays the colorbar
         plt.colorbar()
 
@@ -206,12 +216,13 @@ class DataMapper:
         """ Plots GPS data and speed """
 
         # Creates lists of longitude and latitude to be passed to self.ax.plot() to be plotted along with speed
-        data_parser(self.file, self.fLong_list, self.fLat_list, self.fShip_speed_list, DataAttributes.SHIP_SPEED_GROUND)
+        self.__data_parser(data_attribute=DataAttributes.SHIP_SPEED_GROUND)
 
         # Plots the data
         # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
         plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fShip_speed_list, cmap=self.color_mapping,
                     transform=self.transformation)
+
         # Displays the colorbar
         plt.colorbar()
 
@@ -219,12 +230,13 @@ class DataMapper:
         """ Plots GPS data and temperature """
 
         # Creates lists of longitude and latitude to be passed to self.ax.plot() to be plotted along with temperature
-        data_parser(self.file, self.fLong_list, self.fLat_list, self.fTemperature_list, DataAttributes.TEMPERATURE)
+        self.__data_parser(data_attribute=DataAttributes.TEMPERATURE)
 
         # Plots the data
         # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
         plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fTemperature_list, cmap=self.color_mapping,
                     transform=self.transformation)
+
         # Displays the colorbar
         plt.colorbar()
 
@@ -232,12 +244,13 @@ class DataMapper:
         """ Plots GPS data and salinity """
 
         # Creates lists of longitude and latitude to be passed to self.ax.plot() to be plotted along with salinity
-        data_parser(self.file, self.fLong_list, self.fLat_list, self.fSalinity_list, DataAttributes.SALINITY)
+        self.__data_parser(data_attribute=DataAttributes.SALINITY)
 
         # Plots the data
         # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
         plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fSalinity_list, cmap=self.color_mapping,
                     transform=self.transformation)
+
         # Displays the colorbar
         plt.colorbar()
 
@@ -245,12 +258,13 @@ class DataMapper:
         """ Plots GPS data and conductivity """
 
         # Creates lists of longitude and latitude to be passed to self.ax.plot() to be plotted along with conductivity
-        data_parser(self.file, self.fLong_list, self.fLat_list, self.fConductivity_list, DataAttributes.CONDUCTIVITY)
+        self.__data_parser(data_attribute=DataAttributes.CONDUCTIVITY)
 
         # Plots the data
         # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
         plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fConductivity_list, cmap=self.color_mapping,
                     transform=self.transformation)
+
         # Displays the colorbar
         plt.colorbar()
 
@@ -258,7 +272,7 @@ class DataMapper:
         """ Plots GPS data and fluorescence """
 
         # Creates lists of longitude and latitude to be passed to self.ax.plot() to be plotted along with fluorescence
-        data_parser(self.file, self.fLong_list, self.fLat_list, self.fFluorescence_list, DataAttributes.FLUORESCENCE)
+        self.__data_parser(data_attribute=DataAttributes.FLUORESCENCE)
 
         # Plots the data
         # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors, param 5 - color mapping
