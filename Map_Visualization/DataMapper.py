@@ -6,7 +6,6 @@
 
 # TODO: add a label to the colorbar
 # TODO: add vectors/arrows for ship heading and ship course
-# TODO: change the name of the window for the map, i.e. more descriptive than "Figure 1"
 # TODO: error - 2 matplotlib instances are opened the first time anything is plotted
 
 ###########################################################################
@@ -91,13 +90,13 @@ class DataMapper:
         self.osm_tiles = OSM()
 
         # Changes the display size - specifically figsize=(x,y)
-        fig = plt.figure(figsize=(12, 6))
+        self.fig = plt.figure(figsize=(12, 6))
 
         # Create a GeoAxes in the tile's projection
         self.ax = plt.axes(projection=self.osm_tiles.crs)
 
         # Reduces the margin sizes
-        fig.tight_layout()
+        # fig.tight_layout()
 
 
     def __data_parser(self, data_attribute:DataAttributes=DataAttributes.NO_DATA):
@@ -204,32 +203,42 @@ class DataMapper:
         # param 5 - color mapping (optional)
         if data_attribute == DataAttributes.NO_DATA or data_attribute == DataAttributes.GPS:
             plt.scatter(self.fLong_list, self.fLat_list, s=6, transform=self.transformation)
+            plt.title("GPS Mapping")
         elif data_attribute == DataAttributes.TEMPERATURE:
             plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fTemperature_list, cmap=self.color_mapping,
                         transform=self.transformation)
+            plt.title("Temperature")
         elif data_attribute == DataAttributes.SALINITY:
             plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fSalinity_list, cmap=self.color_mapping,
                         transform=self.transformation)
+            plt.title("Salinity")
         elif data_attribute == DataAttributes.FLUORESCENCE:
             plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fFluorescence_list, cmap=self.color_mapping,
                         transform=self.transformation)
+            plt.title("Fluorescence")
         elif data_attribute == DataAttributes.CONDUCTIVITY:
             plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fConductivity_list, cmap=self.color_mapping,
                         transform=self.transformation)
+            plt.title("Conductivity")
         elif data_attribute == DataAttributes.SHIP_SPEED_GROUND:
             plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fShip_speed_list, cmap=self.color_mapping,
                         transform=self.transformation)
+            plt.title("Ship's Speed Over Ground")
         elif data_attribute == DataAttributes.SHIP_HEADING_DEG:
             plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fShip_heading_list, cmap=self.color_mapping,
                         transform=self.transformation)
+            plt.title("Ship's Heading in Degrees")
         elif data_attribute == DataAttributes.SHIP_COURSE_GROUND:
             plt.scatter(self.fLong_list, self.fLat_list, s=6, c=self.fShip_course_list, cmap=self.color_mapping,
                         transform=self.transformation)
+            plt.title("Ship's Course Over Ground")
 
         # Plots the colorbar for all data attributes except for GPS only
         if data_attribute != DataAttributes.NO_DATA and data_attribute != DataAttributes.GPS:
             plt.colorbar()
 
+        # Reduces the margin sizes
+        self.fig.tight_layout()
 
     def display_map(self):
         """ Call after using all plotting functions to display the map """
