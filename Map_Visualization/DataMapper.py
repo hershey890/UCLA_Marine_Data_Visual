@@ -4,9 +4,9 @@
 # UCLA Electrical Engineering Class of 2021
 # To contact me for any projects or opportunities, email me at hersh.joshi1@gmail.com
 
-# TODO: add a label to the colorbar
 # TODO: add vectors/arrows for ship heading and ship course
 # TODO: error - 2 matplotlib instances are opened the first time anything is plotted
+# TODO: allow for any GPS x a different data type to  be plotted
 
 ###########################################################################
 #   DATA FORMAT - .txt file
@@ -38,7 +38,7 @@ from cartopy.io.img_tiles import OSM
 import socket
 
 class DataAttributes(int):
-    """ Substitute for enumeration """
+    """ Substitute for enumeration. """
     NO_DATA             = -1
     DATE                = 1
     TIME                = 2
@@ -58,18 +58,18 @@ class DataMapper:
     """ Plots all the data points for a particular attribute (ex. (lat, long, temp), (lat, long, conductivity) """
 
     def __init__(self, file:str):
-        self.file = file
-        # self.title = tk.
         self.is_heading_plotted = False
         self.is_course_plotted = False
+        self.file = file
         self.transformation = ccrs.PlateCarree()
-        self.color_mapping = 'viridis' # TODO: psure I can use a class and ____.viridis
+        self.color_mapping = 'viridis'
         self.fMin_latitude = -1
         self.fMax_latitude = -1
         self.fMin_longitude = -1
         self.fMax_longitude = -1
         self.fMap_margins = 0.05
 
+        # Initializes lists used to store all data for a particular data attribute
         self.iDate_list = []
         self.fTime_list = []
         self.fLong_list = []  # x coord
@@ -85,7 +85,6 @@ class DataMapper:
         # ***********************************************************************
         # * MAP SETUP
         # ***********************************************************************
-
         # Get map tiles from the OpenStreetMap Server, map tiles allow for maps to be loaded from servers
         self.osm_tiles = OSM()
 
@@ -95,23 +94,17 @@ class DataMapper:
         # Create a GeoAxes in the tile's projection
         self.ax = plt.axes(projection=self.osm_tiles.crs)
 
-        # Reduces the margin sizes
-        # fig.tight_layout()
-
 
     def __data_parser(self, data_attribute:DataAttributes=DataAttributes.NO_DATA):
         """ Reads the data from the .txt file and stores it in a list for longitude and one for latitude
 
-        :param file: string containing the name of the file with the sensor data (must contain the file extension .txt)
-        :param fLongitude_list: pass an empty list that will be filled with all the longitudinal data points
-        :param fLatitude_list: pass an empty list that will be filled with all the latitude data points
-        :param fData_list: stores an optional data attribute to be displayed (i.e. temperature, salinity,
-               conductivity, fluorescence), ex. DataAttributes.SALINITY
-        :param iData_Attribute: pass a member variables (8-11) from DataAttributes to determine which one is plotted
-        :return: void - modifies the lists passed to the function
+        :param data_attribute: used to specify the type of data to be parsed. Pass DataAttribute.GPS for just
+        GPS data, all other data types plot GPS automatically
+            ex. self.__data_parser(DataAttributes.GPS), self.__data_parser(DataAttributes.SALINITY)
         """
 
         count = 0
+
         # Opens, closes and reads the file
         with open(self.file, 'r') as data:
             # Iterates through lines in the file
@@ -185,6 +178,12 @@ class DataMapper:
 
 
     def plot_data(self, data_attribute:DataAttributes=DataAttributes.NO_DATA):
+        """Plots the data as a scatterplot overlayed over a map
+
+        :param data_attribute: pass a member variable from class DataAttribute to specify
+        the data type to be plotted, ex. plot_data(DataAttribute.CONDUCTIVITY)
+        :return: nothing
+        """
         # Parses data from file into lists such as fLong_list and fShip_speed_list
         self.__data_parser(data_attribute)
 
@@ -246,10 +245,7 @@ class DataMapper:
 
 
 class GUI(tk.Frame):
-    """Creates a GUI to allow the user to use the functions from the DataMapper class without having to look at code.
-
-    Code based on examples from: https://docs.python.org/3/library/tkinter.html
-    """
+    """Creates a GUI to allow the user to use the functions from the DataMapper class without having to look at code."""
 
     def __init__(self, master=tk.Tk()):
         super().__init__(master)
@@ -259,6 +255,7 @@ class GUI(tk.Frame):
         self.master.title("DataMapper")
 
         self.is_pressed = False
+        self.file_selected = False
         self.is_GPS_pressed = False
         self.is_temperature_pressed = False
         self.is_fluorescence_pressed = False
@@ -268,18 +265,21 @@ class GUI(tk.Frame):
         self.is_ship_heading_pressed = False
         self.is_ship_course_pressed = False
 
-        # Checking if connected to internet
+        # Checking if connected to internet, raises an error box if not connected
         if not self.__connected_to_internet():
             messagebox.showerror("Error - DataMapper", "Not Connected to Internet, "
                                          "Application will not function without an internet connection")
 
 
     def create_widgets(self):
+        # Adds text to the box giving the author and his contact information
         self.message_author = tk.Message(text="_____________________________________________________________"
                                               "___________________________________________________________\n"
                                               "Created by Hersh Joshi for the UCLA Marine Operations Program, 2018"
                                               " - hersh.joshi1@gmail.com", width=600)
         self.message_author.pack(side="bottom")
+
+        # Adds text describing use of the app
         self.message2 = tk.Message(text="Plotting the map can take up to a minute. Please be patient after plotting a"
                                         "particular data attribute as a black screen will be displayed until the"
                                         "plotting is complete.", width=600)
@@ -323,7 +323,7 @@ class GUI(tk.Frame):
         self.plot_ship_course_button.pack(side="left", padx=5, pady=5)
 
 
-    def display_map(self, data_attribute:int):
+    def display_map(self, data_attribute:int=DataAttributes.NO_DATA):
         """ Displays a map corresponding to the the button pressed
 
         :param data_attribute: pass a member variable from class DataAttributes to specify the data attribute
@@ -362,9 +362,6 @@ class GUI(tk.Frame):
             self.Map.plot_data(data_attribute=DataAttributes.SHIP_COURSE_GROUND)
         elif data_attribute == DataAttributes.SHIP_SPEED_GROUND:
             self.Map.plot_data(data_attribute=DataAttributes.SHIP_SPEED_GROUND)
-        else:
-            print(data_attribute, "ERROR")
-            # TODO: raise arn error/error dialogue box here
 
         # Displays the map
         self.Map.display_map()
