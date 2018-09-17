@@ -51,7 +51,7 @@ GUI (example displays GPS and salinity):
 
 
 ## Other Notes
-At the present the code only works with the format used in SampleData.txt. I intend to make it more general purpose so that any combination of GPS data x any other data type can be used. Additionally, the current version of the code only works for the LA region. These are all simple fixes that will be improved upon but given that this code is a work in progress, they are lower on my list of priority since my first job is to make working code for my lab.
+At the present the code only works with the format used in SampleData.txt. I intend to make it more general purpose so that any combination of GPS data x any other data type can be used. This is a simple fixes that will be improved upon shortly.
 
 Admittedly, there are a lot of steps involved with setting up your environment to run this program, but it allows for the most rapid development of this software.
 
