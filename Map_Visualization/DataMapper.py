@@ -1,15 +1,14 @@
 # module DataMapper.py
-# To map a specific region, check out these links:
-# https://stackoverflow.com/questions/25428512/draw-a-map-of-a-specific-country-with-cartopy
-# https://github.com/SciTools/cartopy/issues/1048
-# Code for downloading tiles for mapping online: https://scitools.org.uk/cartopy/docs/latest/gallery/eyja_volcano.html
+#
+# Hersh Joshi, 2018
+# UCLA Electrical Engineering Class of 2021
+# To contact me for any projects or opportunities, email me at hersh.joshi1@gmail.com
 
 # TODO: add a label to the colorbar
 # TODO: add vectors/arrows for ship heading and ship course
-# TODO: add descriptions/text to the GUI at the start
-# TODO: add a error dialogue box if there are issues
-# TODO: add something to the GUI that allows you to select a file through there
 # TODO: change the name of the window for the map, i.e. more descriptive than "Figure 1"
+# TODO: error - 2 matplotlib instances are opened the first time anything is plotted
+# TODO: add a check for wifi connection
 
 ###########################################################################
 #   DATA FORMAT - .txt file
@@ -56,13 +55,18 @@ class DataAttributes(int):
 class DataMapper:
     """ Plots all the data points for a particular attribute (ex. (lat, long, temp), (lat, long, conductivity) """
 
-    # TODO: add a method of inputting the file
     def __init__(self, file:str):
         self.file = file
+        # self.title = tk.
         self.is_heading_plotted = False
         self.is_course_plotted = False
         self.transformation = ccrs.PlateCarree()
         self.color_mapping = 'viridis' # TODO: psure I can use a class and ____.viridis
+        self.fMin_latitude = -1
+        self.fMax_latitude = -1
+        self.fMin_longitude = -1
+        self.fMax_longitude = -1
+        self.fMap_margins = 0.05
 
         self.iDate_list = []
         self.fTime_list = []
@@ -81,28 +85,27 @@ class DataMapper:
         # ***********************************************************************
 
         # Get map tiles from the OpenStreetMap Server, map tiles allow for maps to be loaded from servers
-        osm_tiles = OSM()
+        self.osm_tiles = OSM()
 
         # Changes the display size - specifically figsize=(x,y)
         fig = plt.figure(figsize=(12, 6))
 
         # Create a GeoAxes in the tile's projection
-        self.ax = plt.axes(projection=osm_tiles.crs)
+        self.ax = plt.axes(projection=self.osm_tiles.crs)
 
         # Reduces the margin sizes
         fig.tight_layout()
 
         # Limit the extent of the map to a specific region based on latitude/longitude
         # TODO: make the margins flexible and based on the data points
-        self.ax.set_extent([-118.54, -118.35, 33.715, 34.02], crs=ccrs.PlateCarree())
+        # self.ax.set_extent([-118.54, -118.35, 33.715, 34.02], crs=ccrs.PlateCarree())
 
         # Add the Stamen data at zoom level 12. Zoom level 1 is the most zoomed out while Zoom level 14 would be
         # most zoomed in. The most I've gotten to work is 12. Additionally, the higher the zoom level, the longer
         # the amount of time required to load the mao Finally, interpolation='spline36' makes the map render
         # better for some reason.
-        self.ax.add_image(osm_tiles, 12, interpolation='spline36')
+        # self.ax.add_image(osm_tiles, 12, interpolation='spline36')
 
-    # TODO: can simplify this function, there's no need to pass so many lists to it, I can return multiple lists!
     def __data_parser(self, data_attribute:DataAttributes=DataAttributes.NO_DATA):
         """ Reads the data from the .txt file and stores it in a list for longitude and one for latitude
 
@@ -115,6 +118,7 @@ class DataMapper:
         :return: void - modifies the lists passed to the function
         """
 
+        count = 0
         # Opens, closes and reads the file
         with open(self.file, 'r') as data:
             # Iterates through lines in the file
@@ -124,6 +128,7 @@ class DataMapper:
                 fLatitude = ''
                 fData = ''
                 error_flag = False
+                count += 1
 
                 # Reads through a single line to save the latitude and longitude
                 for char in line:
@@ -146,9 +151,28 @@ class DataMapper:
                 if error_flag:
                     continue
 
+                fLatitude = float(fLatitude)
+                fLongitude = float(fLongitude)
+
+                # Sets min and max latitude/longitude bounds to be used for the map margins
+                if count == 1:
+                    self.fMax_latitude = fLatitude
+                    self.fMin_latitude = fLatitude
+                    self.fMax_longitude =fLongitude
+                    self.fMin_longitude = fLongitude
+                else:
+                    if fLatitude > self.fMax_latitude:
+                        self.fMax_latitude = fLatitude
+                    elif fLatitude < self.fMin_latitude:
+                        self.fMin_latitude = fLatitude
+                    if fLongitude > self.fMax_longitude:
+                        self.fMax_longitude = fLongitude
+                    elif fLongitude < self.fMin_longitude:
+                        self.fMin_longitude = fLongitude
+
                 # Adds the data points to the list
-                self.fLat_list.append(float(fLatitude))
-                self.fLong_list.append(float(fLongitude))
+                self.fLat_list.append(fLatitude)
+                self.fLong_list.append(fLongitude)
 
                 # If there are any other data attributes to be displayed, will add it to the list here
                 if data_attribute == DataAttributes.TEMPERATURE:
@@ -170,6 +194,17 @@ class DataMapper:
     def plot_data(self, data_attribute:DataAttributes=DataAttributes.NO_DATA):
         # Parses data from file into lists such as fLong_list and fShip_speed_list
         self.__data_parser(data_attribute)
+
+        # Limit the extent of the map to a specific region based on latitude/longitude
+        self.ax.set_extent([self.fMin_longitude - self.fMap_margins, self.fMax_longitude + self.fMap_margins,
+                            self.fMin_latitude - self.fMap_margins, self.fMax_latitude + self.fMap_margins],
+                           crs=ccrs.PlateCarree())
+
+        # Add the Stamen data at zoom level 12. Zoom level 1 is the most zoomed out while Zoom level 14 would be
+        # most zoomed in. The most I've gotten to work is 12. Additionally, the higher the zoom level, the longer
+        # the amount of time required to load the mao Finally, interpolation='spline36' makes the map render
+        # better for some reason.
+        self.ax.add_image(self.osm_tiles, 12, interpolation='spline36')
 
         # Parameter 1 - x, param 2 - y, param 3 - point size (pixels), param 4 - colors (optional),
         # param 5 - color mapping (optional)
@@ -201,6 +236,7 @@ class DataMapper:
         if data_attribute != DataAttributes.NO_DATA and data_attribute != DataAttributes.GPS:
             plt.colorbar()
 
+
     def display_map(self):
         """ Call after using all plotting functions to display the map """
         plt.show()
@@ -215,10 +251,9 @@ class GUI(tk.Frame):
     def __init__(self, master=tk.Tk()):
         super().__init__(master)
         self.pack()
-        # self.Map = DataMapper()
-        # self.filename = ""
         self.create_widgets()
         self.master=master
+        self.master.title("Data Mapper")
 
         self.is_pressed = False
         self.is_GPS_pressed = False
@@ -232,6 +267,18 @@ class GUI(tk.Frame):
 
 
     def create_widgets(self):
+        self.message_author = tk.Message(text="_____________________________________________________________"
+                                              "___________________________________________________________\n"
+                                              "Created by Hersh Joshi for the UCLA Marine Operations Program, 2018"
+                                              " - hersh.joshi1@gmail.com", width=600)
+        self.message_author.pack(side="bottom")
+        self.message2 = tk.Message(text="Plotting the map can take up to a minute. Please be patient after plotting a"
+                                        "particular data attribute as a black screen will be displayed until the"
+                                        "plotting is complete.", width=600)
+        self.message2.pack(side="bottom")
+        self.message = tk.Message(text="Please select file before beginning mapping.", width=600)
+        self.message.pack(side="bottom")
+
         # Button for selecting the *.txt file containing the data to be inputted
         # Gets the file name as self.filename
         self.choose_file_button = tk.Button(self, text="Input File", command=self.__file_dialog)
@@ -240,20 +287,21 @@ class GUI(tk.Frame):
         # Creates Button Instances
             # text: defines the text to be displayed on the button
             # command: defines the function to be executed when the button is pressed
-        self.plot_GPS_button = tk.Button(self, text="GPS", command=(lambda: self.display_map(DataAttributes.GPS)))
-        self.plot_temperature_button = tk.Button(self, text="Temperature",
+        self.plot_GPS_button = tk.Button(self, text="GPS", state="disabled",
+                                         command=(lambda: self.display_map(DataAttributes.GPS)))
+        self.plot_temperature_button = tk.Button(self, text="Temperature", state="disabled",
                                                  command=(lambda: self.display_map(DataAttributes.TEMPERATURE)))
-        self.plot_fluorescence_button = tk.Button(self, text="Fluorescence",
+        self.plot_fluorescence_button = tk.Button(self, text="Fluorescence", state="disabled",
                                                   command=(lambda: self.display_map(DataAttributes.FLUORESCENCE)))
-        self.plot_speed_button = tk.Button(self, text="Speed",
+        self.plot_speed_button = tk.Button(self, text="Speed", state="disabled",
                                            command=(lambda: self.display_map(DataAttributes.SHIP_SPEED_GROUND)))
-        self.plot_salinity_button = tk.Button(self, text="Salinity",
+        self.plot_salinity_button = tk.Button(self, text="Salinity", state="disabled",
                                               command=(lambda: self.display_map(DataAttributes.SALINITY)))
-        self.plot_conductivity_button = tk.Button(self, text="Conductivity",
+        self.plot_conductivity_button = tk.Button(self, text="Conductivity", state="disabled",
                                                   command=(lambda: self.display_map(DataAttributes.CONDUCTIVITY)))
-        self.plot_ship_heading_button = tk.Button(self, text="Ship Heading",
+        self.plot_ship_heading_button = tk.Button(self, text="Ship Heading", state="disabled",
                                                   command=(lambda: self.display_map(DataAttributes.SHIP_HEADING_DEG)))
-        self.plot_ship_course_button = tk.Button(self, text="Ship Course",
+        self.plot_ship_course_button = tk.Button(self, text="Ship Course", state="disabled",
                                                  command=(lambda: self.display_map(DataAttributes.SHIP_COURSE_GROUND)))
 
         # Positions the buttons within the window
@@ -266,9 +314,6 @@ class GUI(tk.Frame):
         self.plot_ship_heading_button.pack(side="left", padx=5, pady=5)
         self.plot_ship_course_button.pack(side="left", padx=5, pady=5)
 
-        # Button for quitting(ending) the application
-        self.quit = tk.Button(self, text="QUIT", fg="red", command=self.master.destroy)
-        self.quit.pack(side="left")
 
     def display_map(self, data_attribute:int):
         """ Displays a map corresponding to the the button pressed
@@ -281,35 +326,28 @@ class GUI(tk.Frame):
         # is clicked once, the previous Map = DataMapper() instance is deleted and a new one is created
         if self.is_pressed:
             del self.Map
-            self.Map = DataMapper()
         else:
             self.is_pressed = True
+
+        self.Map = DataMapper(self.filename)
 
         # Plots the data depending on what DataAttribute is passed to the function
         if data_attribute == DataAttributes.GPS:
             self.Map.plot_data(data_attribute=DataAttributes.GPS)
-            # self.Map.plot_GPS()
         elif data_attribute == DataAttributes.TEMPERATURE:
             self.Map.plot_data(data_attribute=DataAttributes.TEMPERATURE)
-            # self.Map.plot_temperature()
         elif data_attribute == DataAttributes.FLUORESCENCE:
             self.Map.plot_data(data_attribute=DataAttributes.FLUORESCENCE)
-            # self.Map.plot_fluorescence()
         elif data_attribute == DataAttributes.SALINITY:
             self.Map.plot_data(data_attribute=DataAttributes.SALINITY)
-            # self.Map.plot_salinity()
         elif data_attribute == DataAttributes.CONDUCTIVITY:
             self.Map.plot_data(data_attribute=DataAttributes.CONDUCTIVITY)
-            # self.Map.plot_conductivity()
         elif data_attribute == DataAttributes.SHIP_HEADING_DEG:
             self.Map.plot_data(data_attribute=DataAttributes.SHIP_HEADING_DEG)
-            # self.Map.plot_ship_heading()
         elif data_attribute == DataAttributes.SHIP_COURSE_GROUND:
             self.Map.plot_data(data_attribute=DataAttributes.SHIP_COURSE_GROUND)
-            # self.Map.plot_ship_course()
         elif data_attribute == DataAttributes.SHIP_SPEED_GROUND:
             self.Map.plot_data(data_attribute=DataAttributes.SHIP_SPEED_GROUND)
-            # self.Map.plot_ship_course()
         else:
             print(data_attribute, "ERROR")
             # TODO: raise arn error/error dialogue box here
@@ -318,9 +356,20 @@ class GUI(tk.Frame):
         self.Map.display_map()
 
 
-    def __file_dialog(self)->str:
+    def __file_dialog(self):
         self.filename = filedialog.askopenfilename(initialdir = "/", title = "Select file",
                                                    filetypes=(("txt files","*.txt"),("all files","*.*")))
         self.Map = DataMapper(self.filename)
-        # print(self.filename)
-        # return self.filename
+        self.plot_GPS_button.config(state="normal")
+        self.plot_conductivity_button.config(state="normal")
+        self.plot_salinity_button.config(state="normal")
+        self.plot_fluorescence_button.config(state="normal")
+        self.plot_ship_course_button.config(state="normal")
+        self.plot_ship_heading_button.config(state="normal")
+        self.plot_speed_button.config(state="normal")
+        self.plot_temperature_button.config(state="normal")
+        self.choose_file_button.config(state="disabled")
+
+        self.file_chosen_message = tk.Message(text="File chosen: {0}".format(self.filename), width = 700)
+        self.file_chosen_message.pack(side="bottom")
+        self.message.destroy()
