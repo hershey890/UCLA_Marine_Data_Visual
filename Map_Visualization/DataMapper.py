@@ -8,7 +8,6 @@
 # TODO: add vectors/arrows for ship heading and ship course
 # TODO: change the name of the window for the map, i.e. more descriptive than "Figure 1"
 # TODO: error - 2 matplotlib instances are opened the first time anything is plotted
-# TODO: add a check for wifi connection
 
 ###########################################################################
 #   DATA FORMAT - .txt file
@@ -29,11 +28,15 @@
 # Libraries used for the tkinter GUI that pops up before the map pops up
 import tkinter as tk
 from tkinter import filedialog
+from tkinter import messagebox
 
 # Libraries used for displaying the map
 import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 from cartopy.io.img_tiles import OSM
+
+# Used to check internet connection
+import socket
 
 class DataAttributes(int):
     """ Substitute for enumeration """
@@ -96,15 +99,6 @@ class DataMapper:
         # Reduces the margin sizes
         fig.tight_layout()
 
-        # Limit the extent of the map to a specific region based on latitude/longitude
-        # TODO: make the margins flexible and based on the data points
-        # self.ax.set_extent([-118.54, -118.35, 33.715, 34.02], crs=ccrs.PlateCarree())
-
-        # Add the Stamen data at zoom level 12. Zoom level 1 is the most zoomed out while Zoom level 14 would be
-        # most zoomed in. The most I've gotten to work is 12. Additionally, the higher the zoom level, the longer
-        # the amount of time required to load the mao Finally, interpolation='spline36' makes the map render
-        # better for some reason.
-        # self.ax.add_image(osm_tiles, 12, interpolation='spline36')
 
     def __data_parser(self, data_attribute:DataAttributes=DataAttributes.NO_DATA):
         """ Reads the data from the .txt file and stores it in a list for longitude and one for latitude
@@ -253,7 +247,7 @@ class GUI(tk.Frame):
         self.pack()
         self.create_widgets()
         self.master=master
-        self.master.title("Data Mapper")
+        self.master.title("DataMapper")
 
         self.is_pressed = False
         self.is_GPS_pressed = False
@@ -264,6 +258,11 @@ class GUI(tk.Frame):
         self.is_conductivity_pressed = False
         self.is_ship_heading_pressed = False
         self.is_ship_course_pressed = False
+
+        # Checking if connected to internet
+        if not self.__connected_to_internet():
+            messagebox.showerror("Error - DataMapper", "Not Connected to Internet, "
+                                         "Application will not function without an internet connection")
 
 
     def create_widgets(self):
@@ -322,6 +321,12 @@ class GUI(tk.Frame):
         to be displayed
         :return: nothing
         """
+
+        # Checking if connected to internet
+        if not self.__connected_to_internet():
+            messagebox.showerror("Error - DataMapper", "Not Connected to Internet, "
+                                                       "Application will not function without an internet connection")
+
         # Matplotlib/cartopy somehow has issues plotting things multiple times, therefore after a button
         # is clicked once, the previous Map = DataMapper() instance is deleted and a new one is created
         if self.is_pressed:
@@ -373,3 +378,17 @@ class GUI(tk.Frame):
         self.file_chosen_message = tk.Message(text="File chosen: {0}".format(self.filename), width = 700)
         self.file_chosen_message.pack(side="bottom")
         self.message.destroy()
+
+
+    def __connected_to_internet(self, host="8.8.8.8", port=53, timeout=3):
+        """
+        ...   Host: 8.8.8.8 (google-public-dns-a.google.com)
+        ...   OpenPort: 53/tcp
+        ...   Service: domain (DNS/TCP)
+        ...   """
+        try:
+            socket.setdefaulttimeout(timeout)
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
+            return True
+        except Exception as ex:
+            return False
