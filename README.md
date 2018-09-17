@@ -41,7 +41,8 @@ conda install numpy
 ## Running the program
 1. Put main.py, DataMapper.py, and SampleData.txt in the same file
 2. Open up command prompt, powershell, or terminal and navigate to the folder all the above programs are located in (should work using the cd command)
-3. Run the code with:
+3. Make sure you have an internet connection. This application downloads map data from online servers.
+4. Run the code with:
 ```
 py main.py
 ```
